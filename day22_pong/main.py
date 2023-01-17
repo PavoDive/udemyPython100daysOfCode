@@ -6,7 +6,7 @@ from random import choice
 from scoreboard import Scoreboard
 
 # Create the board with screen dimensions
-screen = Screen()
+
 screen = Screen()
 screen.setup(width = 800, height = 600)
 
