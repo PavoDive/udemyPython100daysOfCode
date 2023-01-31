@@ -1,8 +1,13 @@
 from random import choice
 import smtplib
 import datetime
-from password import gmail_password
 import pandas
+from password import gmail_password
+# There is a file password.py in the same folder and it only contains
+# the following line:
+# gmail_password = "the-16-digit-password-given-by-google"
+# this was done to avoid commiting the password to github
+
 
 # ---------- function to send emails ----------
 my_email = "testpythongp@gmail.com"

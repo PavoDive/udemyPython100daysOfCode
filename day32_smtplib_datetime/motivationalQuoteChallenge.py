@@ -1,7 +1,11 @@
 import smtplib
 import datetime
-from password import gmail_password
 from random import choice
+from password import gmail_password
+# There is a file password.py in the same folder and it only contains
+# the following line:
+# gmail_password = "the-16-digit-password-given-by-google"
+# this was done to avoid commiting the password to github
 
 # ------------ read the quotes -----------
 with open("quotes.txt") as file1:
