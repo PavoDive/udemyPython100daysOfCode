@@ -8,7 +8,7 @@ class Sheety:
 
         """
         self.headers = {"Authorization": password.sheety_token}
-        self.url = "https://api.sheety.co/5d3eed5e35cde1309ff5d6bc8e52ec6e/myWorkouts/workouts"
+        self.url = f"https://api.sheety.co/{password.sheety_user_string}/myWorkouts/workouts"
 
 
     def post_food(self, foods):
