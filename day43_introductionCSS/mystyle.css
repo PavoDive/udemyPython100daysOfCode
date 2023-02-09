@@ -1,0 +1,45 @@
+/* CSS: Cascading Style Sheets */
+
+/* the css modifications are made inline the html files in the personal resume project */
+
+/* in inline CSS style is changed by means of the attributes */
+/* of each HTML tag. Like this: */
+/*     <body style="background-color: #BDCDD6;"> */
+
+/* ---------------- Internal CSS ---------------- */
+
+/* With internal CSS the changes are applied **inside** the head */
+/* environment of the file, and **inside** <style> tags, like this: */
+
+/* <head> */
+/* <style> */
+
+/* hr { */
+/*     background-color: white; */
+/* } */
+
+
+/* </style> */
+
+/* </head> */
+	 
+/* ---------------- External CSS ---------------- */
+
+/* External CSS is used when changes in style are expected across */
+/* an entire website, as opposed to only one page. With external CSS */
+/* changes are applied to a file like this one, which then will be
+referenced en each html file */
+
+/* the key to referencing is putting a line in the <head> of each
+/* file:
+/*     <link rel="stylesheet" href="css/styles.css"> */
+
+/* ---------------- Precedence ----------------
+
+/* Inline > intrnal > external
+/* id > class > tag
+
+/* ---------------- Best Practices ----------------
+
+/* Sort all the properties being set in a specific tag
+/* in alphabetical order

@@ -1,0 +1,42 @@
+/* ========== Tag Selectors ========== */
+
+body{
+    background-color: steelblue;
+}
+
+h1{
+    font-size: 50px;
+    color: red;    
+  }
+
+/* style can be changed upon user action: */
+
+img:hover {
+    background-color: blueviolet;
+    
+}
+
+/* ========== Class Selectors */
+
+/* a tag can have more than one class */
+
+.bacon{
+    background-color: red;
+}
+
+.broccoli{
+    background-color: green;
+}
+
+.circular{
+    border-radius: 100%;
+}
+
+/* ========== ID Selectors ========== */
+
+/* ids have to be unique in the document. Not two tags can share
+/* the same id */
+
+#final-comments {
+    color: blue;
+}
