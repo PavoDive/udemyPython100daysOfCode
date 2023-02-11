@@ -1,0 +1,242 @@
+body{
+    margin-top: 0px;
+  margin-left: 0px;
+  margin-right: 0px;
+  text-align: center; /* centers the element in its box*/
+  /* margin: 0 auto 0 auto; centers the element in the page. Useful when the element has a width set.*/
+  /* font-family: Verdana, Geneva, sans-serif; /* https://www.cssfontstack.com/ */
+  font-family: 'Merriweather', serif; /* from fonts.google.com */
+  
+}
+
+.top-container{
+    background-color: #EAF6F6;
+    position: relative;
+    padding-top: 20px;
+}
+
+.pavodive-img{
+    border-radius: 100%;
+    width: 15%;
+    margin-top: 30px;
+}
+
+h1 {
+    /* font-size: 562.5%; /* dynamic = 90px (static) = 5.625em (dynamic). This in inherited from the parent container, so if it's set
+dynaymically in the parent container, it's *scaled twice*
+   1em = 1rem = 100% = 16px */
+    /* 5.625rem "r" for root: it doesn't scale with the parent */
+    font-size: 5.625rem;
+    margin-top: 0px;
+    font-family: 'Sacramento', cursive;
+    margin: 50px auto 0 auto; /* top right bottom left. Auto is for centering */
+    color: #66BFBF;
+}
+
+h2{
+    font-family: 'Montserrat', sans-serif;
+    font-size: 2.5rem;
+    color: #66BFBF;
+    font-weight: normal;
+}
+
+h3{
+    font-family: 'Montserrat', sans-serif;
+    color: #11999E;
+}
+
+.pro{
+    text-decoration: underline;
+        
+
+}
+
+p{
+    color: #40514E;
+}
+
+hr{
+    width: 5%;
+    border-top: 6px dotted #D7E9B9;
+    margin-top: 40px;
+}
+
+.top-cloud{
+    position: absolute;
+    right: 300px;
+    top: -7px;
+}
+
+.bottom-cloud{
+    position: absolute;
+    left: 200px;
+    bottom: 300px;
+}
+
+.skill-row{
+    width: 50%;
+    display: inline-block;
+    margin: 60px auto 60px auto;
+    text-align: left;
+    line-height: 1.5;
+}
+
+.skill-image{
+    width: 25%;
+    float: left;
+    margin-right: 30px;
+}
+
+.papers-image{
+    float: right;
+    margin-left: 30px;
+    margin-right: 0px;
+}
+
+.btn {
+  background: #11cdd4;
+  background-image: -webkit-linear-gradient(top, #11cdd4, #11999e);
+  background-image: -moz-linear-gradient(top, #11cdd4, #11999e);
+  background-image: -ms-linear-gradient(top, #11cdd4, #11999e);
+  background-image: -o-linear-gradient(top, #11cdd4, #11999e);
+  background-image: linear-gradient(to bottom, #11cdd4, #11999e);
+  -webkit-border-radius: 8;
+  -moz-border-radius: 8;
+  border-radius: 8px;
+  font-family: Arial;
+  color: #ffffff;
+  font-size: 20px;
+  padding: 10px 20px 10px 20px;
+  text-decoration: none;
+}
+
+.btn:hover {
+  background: #30e3cb;
+  background-image: -webkit-linear-gradient(top, #30e3cb, #2bc4ad);
+  background-image: -moz-linear-gradient(top, #30e3cb, #2bc4ad);
+  background-image: -ms-linear-gradient(top, #30e3cb, #2bc4ad);
+  background-image: -o-linear-gradient(top, #30e3cb, #2bc4ad);
+  background-image: linear-gradient(to bottom, #30e3cb, #2bc4ad);
+  text-decoration: none;
+}
+
+.bottom-container{
+    margin-top: 100px;
+    background-color: #66BFBF;
+    padding-top: 40px;
+    padding-bottom: 40px;
+}
+
+a{
+    color: #11999E;
+    /* I didn't think of the following, but that's design :( */
+    margin: 0 10px 0 10px; 
+    font-family: Montserrat, sans-serif;
+    text-decoration: none; /* remove underline */
+}
+
+a:hover{
+    color: #EAF6F6;
+}
+
+
+.copyright{
+    color: #EAF6F6;
+}
+
+
+/*
+.skill-text-1{
+    clear: left; this can be understood as "anti-float"
+} */
+
+/*
+.skill-text-2{
+    clear: right;
+}
+*/
+
+
+
+
+/* This part here was a challenge to understand the concepts
+of margins, padding and sizes.
+
+.bottom-container{
+    height: 200px;
+    width: 200px;
+    background-color: steelblue;
+    border: 10px;
+    border-color: black;
+    border-style: solid;
+    margin-left: 500px;
+}
+
+.middle-container{
+    height: 200px;
+    width: 200px;
+    background-color: tomato;
+    border: 20px;
+    border-color: black;
+    border-style: solid;
+    margin-left: 260px;
+}
+
+.top-container{
+    height: 200px;
+    width: 200px;
+    border: 10px;
+    border-color: black;
+    border-style: solid;
+    padding: 20px;
+}
+*/
+
+/* blocks take the whole widht of the screen. Common block
+elements:
++ div
++ p
++ h1:h6
++ ol, ul, li
++ form
+
+Their width *can* be changed.
+*/
+
+/* inline elements only take as much as they need to
+in height and width, and can share the same line. Common inline
+ elements:
++ span
++ img
++ anchors <a>
+
+their width **cannot** be changed.
+*/
+
+/* inline-block elements take as much width and height as they
+need to, **but that can be changed**, and **also** they can be
+displayed next to each other as inline elements.
+*/
+
+/* none is a property of display that "removes" the object from
+the display. Other elements in the page are positioned as if
+the "display: none" element didn't exist.
+*/
+
+/* the property that defines how an item is displayed is
+"display" and can be set to:
+display: block / inline / inline-block / none
+
+An alternative way of not showing an element is
+visibility: hidden
+
+with this, other elements are positioned as if the hidden
+element existed, only that it is not seen.
+*/
+
+/* Position could be:
++ static: as defined by the html
++ relative: relative to *where it should have been*. Needs dimensions in any or several of Top / bottom / left / right. Elements move, but other elements position aren't changed by the new position of the relative element.
++ absolute: position relative to *parent element*. Needs dimensions in any or several of top / bottom / left / right. This positioning affects the flow of the document, so other element change positions. It can be used to put elements in the same line, without using display: inline-block;	
++ fixed: with position fixed the element will not change position, even if the user scrolls.
+*/
