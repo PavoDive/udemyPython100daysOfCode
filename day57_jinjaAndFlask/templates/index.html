@@ -1,0 +1,19 @@
+<html>
+  <head>
+<title>My Website</title>
+</head>
+<body>
+<h1>Hello World</h1>
+<h2>Python commands can be fed by double braces: {{5+2}}</h2>
+<p>And variables given as arguments to the render_template function can be later used or displayed by double braces: the random number is: {{rand}}</p>
+
+<a href="{{url_for('get_blog')}}">Some blogs</a>
+<!-- arguments to url_for (**kwargs) are passed to the route (for example
+     <a href="{{url_for('get_blog',num=3)}}">Link text</a>
+     is passed as @app.route("/blog/<num>) and can be taken by get_blog(num).
+  -->
+</body>
+<footer>
+  <p>Copyright {{current_year}}. Built by {{user_name}}.</p>
+</footer>
+</html>
