@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+<title>Title</title>
+</head>
+<body>
+  <h1>Title</h1>
+  <!-- even though "/login" could have been used in the following line, it's better to leave Flask deal with the correct folder -->
+<form method="post" action="{{ url_for('receive_data') }}">
+  <label>Enter your Name: </label>
+  <input type="text" value="name" name="username">
+  <label>Enter your password: </label>
+  <input type="password" value="password" name="password">
+<input type="submit" value="Ok">
+
+</form>
+
+</body>
+</html>
