@@ -1,0 +1,13 @@
+0000000000000000000000000000000000000000 da8f5974658e8ff1228fb4b1a163b0862d298591 pavodive <giovanni.pavolini@gmail.com> 1702371193 -0500	commit (initial): complete chapter 1: use present tense by convention
+da8f5974658e8ff1228fb4b1a163b0862d298591 b4bfa9b080697fbc35dc977b4cd4bb4993d16d3b pavodive <giovanni.pavolini@gmail.com> 1702371689 -0500	commit: complete chapters 2 and 3
+b4bfa9b080697fbc35dc977b4cd4bb4993d16d3b 0000000000000000000000000000000000000000 pavodive <giovanni.pavolini@gmail.com> 1702373008 -0500	Branch: renamed refs/heads/master to refs/heads/main
+0000000000000000000000000000000000000000 b4bfa9b080697fbc35dc977b4cd4bb4993d16d3b pavodive <giovanni.pavolini@gmail.com> 1702373008 -0500	Branch: renamed refs/heads/master to refs/heads/main
+b4bfa9b080697fbc35dc977b4cd4bb4993d16d3b 710ab89c73890154c94b04167cb42dd644df1880 pavodive <giovanni.pavolini@gmail.com> 1702374468 -0500	commit: test gitignore
+710ab89c73890154c94b04167cb42dd644df1880 004f0bcc56bc79cbbf09505037c52805f1c37162 pavodive <giovanni.pavolini@gmail.com> 1702375279 -0500	commit: demonstrate the power of gitignore
+004f0bcc56bc79cbbf09505037c52805f1c37162 c91f1e6801ac486cae58072d1033b29812d4ca5b pavodive <giovanni.pavolini@gmail.com> 1702376685 -0500	commit: last commit
+c91f1e6801ac486cae58072d1033b29812d4ca5b c91f1e6801ac486cae58072d1033b29812d4ca5b pavodive <giovanni.pavolini@gmail.com> 1702456179 -0500	checkout: moving from main to alien-plot
+c91f1e6801ac486cae58072d1033b29812d4ca5b e1aa7d9569a4dc332c545f5ed05490b4cf5fbbd6 pavodive <giovanni.pavolini@gmail.com> 1702456393 -0500	commit: modify chapter 2 in branch alien-plot
+e1aa7d9569a4dc332c545f5ed05490b4cf5fbbd6 c91f1e6801ac486cae58072d1033b29812d4ca5b pavodive <giovanni.pavolini@gmail.com> 1702456466 -0500	checkout: moving from alien-plot to main
+c91f1e6801ac486cae58072d1033b29812d4ca5b 6b89459bdf04651cbf9de6ea5aa7552efc16fbd2 pavodive <giovanni.pavolini@gmail.com> 1702456589 -0500	commit: add chapter 5
+6b89459bdf04651cbf9de6ea5aa7552efc16fbd2 3b897c1345672836ea81f9ebd972c9270b1c9da3 pavodive <giovanni.pavolini@gmail.com> 1702456796 -0500	commit (merge): merge alien-plot branch
+3b897c1345672836ea81f9ebd972c9270b1c9da3 c4c2828b3682839008f7cdac4038a83e00b45d3c pavodive <giovanni.pavolini@gmail.com> 1702461365 -0500	commit: Day 70 git and github
