@@ -1,0 +1,199 @@
+---
+title: "Lego Analysis"
+format:
+  html:
+    code-fold: true
+    notebook-view: true
+    code-overflow: wrap
+lang: en
+self-contained: true
+---
+
+Today we'll dive deep into a dataset all about LEGO. From the dataset we can ask whole bunch of interesting questions about the history of the LEGO company, their product offering, and which LEGO set ultimately rules them all:
+
++ What is the most enormous LEGO set ever created and how many parts did it have?
++ How did the LEGO company start out? In which year were the first LEGO sets released and how many sets did the company sell when it first launched?
++ Which LEGO theme has the most sets? Is it one of LEGO's own themes like Ninjago or a theme they licensed liked Harry Potter or Marvel Superheroes?
++ When did the LEGO company really expand its product offering? Can we spot a change in the company strategy based on how many themes and sets did it released year-on-year?
++ Did LEGO sets grow in size and complexity over time? Do older LEGO sets tend to have more or fewer parts than newer sets?
+
+[Rebrickable](https://rebrickable.com/downloads/) has compiled data on all the LEGO pieces in existence. I recommend you use download the .csv files provided in this lesson.
+
+**Challenge**: How many different colours does the LEGO company produce? Read the colors.csv file in the data folder and find the total number of unique colours. Try using the [.nunique() method](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.nunique.html?highlight=nunique#pandas.DataFrame.nunique) to accomplish this.
+
+```{python}
+
+
+import pandas as pd
+import matplotlib.pyplot as plt
+from IPython.display import Markdown
+
+colors = pd.read_csv("data/colors.csv")
+
+colors.name.nunique()
+```
+
+**Challenge**: Find the number of transparent colours where `is_trans == 't'` versus the number of opaque colours where `is_trans == 'f'`. See if you can accomplish this in two different ways.
+
+Alternative 1:
+
+```{python}
+colors.groupby("is_trans").name.nunique()
+```
+
+Alternative 2:
+
+```{python}
+print(f'The number of opaque colors is :{colors[colors.is_trans == "f"].name.nunique()}')
+print(f'The number of transparent colors is :{colors[colors.is_trans == "t"].name.nunique()}')
+
+```
+
+### Understanding LEGO Themes vs. LEGO Sets
+
+Walk into a LEGO store and you will see their products organised by theme. Their themes include Star Wars, Batman, Harry Potter and many more.
+
+<img src="https://i.imgur.com/aKcwkSx.png" style="width: 100%;">
+
+A lego set is a particular box of LEGO or product. Therefore, a single theme typically has many different sets.
+
+<img src="https://i.imgur.com/whB1olq.png" style="width: 100%;">
+
+The `sets.csv` data contains a list of sets over the years and the number of parts that each of these sets contained.
+
+**Challenge**: Read the sets.csv data and take a look at the first and last couple of rows.
+
+```{python}
+sets = pd.read_csv("data/sets.csv")
+sets.head(3)
+sets.tail(3)
+```
+
+**Challenge**: In which year were the first LEGO sets released and what were these sets called?
+
+```{python}
+#| echo: false
+
+earliest_set_year = sets.year.idxmin()
+
+Markdown(f'The set {sets.name.iloc[earliest_set_year]} was the earliest set, and it was released in {sets.year.iloc[earliest_set_year]}.')
+```
+
+**Challenge**: How many different sets did LEGO sell in their first year? How many types of LEGO products were on offer in the year the company started?
+
+```{python}
+#| echo: false
+
+Markdown(f'The year the company started ({sets.year.iloc[earliest_set_year]}), it sold {sets[sets.year == sets.year.iloc[earliest_set_year]].name.nunique()} different sets that were part of {sets[sets.year == sets.year.iloc[earliest_set_year]].theme_id.nunique()}\nunique themes.')
+```
+
+**Challenge**: Find the top 5 LEGO sets with the most number of parts.
+
+```{python}
+sets.sort_values(by = "num_parts", ascending = False).head(5)
+```
+
+**Challenge**: Use `.groupby()` and `.count()` to show the number of LEGO sets released year-on-year. How do the number of sets released in 1955 compare to the number of sets released in 2019?
+
+```{python}
+#| echo: false
+
+yearly_releases = sets.groupby("year").count()
+
+released_2019 = yearly_releases.name[yearly_releases.index == 2019].item()
+released_1955 = yearly_releases.name[yearly_releases.index == 1955].item()
+
+proportion = released_2019 / released_1955
+Markdown(f'The number of sets released in 2019 was {released_2019}, {proportion} times more than the number of sets\nreleased in 1955 ({released_1955}).') 
+```
+
+**Challenge**: Show the number of LEGO releases on a line chart using Matplotlib.
+
+Note that the .csv file is from late 2020, so to plot the full calendar years, you will have to exclude some data from your chart. Can you use the slicing techniques covered in Day 21 to avoid plotting the last two years? The same syntax will work on Pandas DataFrames.
+
+```{python}
+#| label: lego-releases
+#| fig-cap: "Number of Lego sets released by year"
+yearly_releases_to_plot = yearly_releases[yearly_releases.index < 2020]
+
+plt.xlabel("Year")
+plt.ylabel("Number of sets released")
+plt.plot(yearly_releases_to_plot.index.to_numpy(), yearly_releases_to_plot.name.to_numpy())
+plt.show()
+```
+
+### Aggregate Data with the Python .agg() Function
+
+Let\'s work out the number of different themes shipped by year. This means we have to count the number of unique theme_ids per calendar year.
+
+**Challenge**: Plot the number of themes released by year on a line chart. Only include the full calendar years (i.e., exclude 2020 and 2021).
+
+```{python}
+#| label: lego-theme-releases
+#| fig-cap: "Number of Lego themes released by year"
+themes_released = sets[sets.year < 2020].groupby("year").theme_id.nunique()
+
+plt.xlabel("Year")
+plt.ylabel("Number of themes released")
+plt.plot(themes_released.index.to_numpy(), themes_released.to_numpy())
+plt.show()
+```
+
+**Challenge**: Use the `.groupby()` and `.agg()` function together to figure out the average number of parts per set. How many parts did the average LEGO set released in 1954 compared to say, 2017?
+
+```{python}
+#| echo: false
+
+average_parts = sets.groupby('year').agg({'num_parts': 'sum', 'name': 'nunique'})
+average_parts["average_parts"] = average_parts["num_parts"] / average_parts["name"]
+
+avg_parts_1954 = average_parts.average_parts[average_parts.index == 1954].item()
+avg_parts_2017 = average_parts.average_parts[average_parts.index == 2017].item()
+
+Markdown(f'In 1954 a LEGO set would have {round(avg_parts_1954, 1)} parts in average, merely a {round(100*avg_parts_1954/avg_parts_2017, 1)}% of the {round(avg_parts_2017, 1)} parts\nthat a set had in average in 2017.')
+```
+
+**Challenge**: Has the size and complexity of LEGO sets increased over time based on the number of parts? Plot the average number of parts over time using a Matplotlib scatter plot. See if you can use the [scatter plot documentation](https://matplotlib.org/3.1.0/api/_as_gen/matplotlib.pyplot.scatter.html) before I show you the solution. Do you spot a trend in the chart?
+
+```{python}
+#| label: average-parts
+#| fig-cap: "Evolution of the average number of parts"
+average_parts_to_plot = average_parts[average_parts.index < 2020]
+
+plt.xlabel("Year")
+plt.ylabel("Average number of parts per set")
+
+plt.scatter(average_parts_to_plot.index, average_parts_to_plot.average_parts)
+plt.show()
+```
+
+LEGO has licensed many hit franchises from Harry Potter to Marvel Super Heros to many others. But which theme has the largest number of individual sets?
+
+**Challenge** Use what you know about HTML markup and tags to display the database schema: https://i.imgur.com/Sg4lcjx.png
+
+<img src="https://i.imgur.com/Sg4lcjx.png" style="width:100%;">
+
+The themes.csv file has the actual theme names. The sets.csv has `theme_ids` which link to the `id` column in the themes.csv.
+
+**Challenge**: Explore the themes.csv. How is it structured? Search for the name \'Star Wars\'. How many `id`s correspond to this name in the themes.csv? Now use these `id`s and find the corresponding the sets in the sets.csv (Hint: you\'ll need to look for matches in the `theme_id` column)
+
+```{python}
+themes = pd.read_csv("data/themes.csv")
+star_wars_ids = themes[themes.name.str.contains("star wars", case = False)].id.unique().tolist()
+
+sets[sets.theme_id.isin(star_wars_ids)].name
+```
+
+### Merging
+
+```{python}
+theme_count = sets.groupby("theme_id").name.count().rename("set_count", inplace = True)
+
+merged_star_wars = pd.merge(theme_count, themes, left_on = "theme_id", right_on = "id").sort_values(by = "set_count", ascending = False)
+
+plt.ylabel("Number of sets")
+plt.gca().invert_yaxis()
+plt.barh(merged_star_wars.name[:10], merged_star_wars.set_count[:10])
+plt.show()
+
+```
