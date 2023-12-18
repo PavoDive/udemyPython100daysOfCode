@@ -1,0 +1,361 @@
+---
+title: "Time Series Processing"
+format:
+  html:
+    code-fold: true
+    notebook-view: true
+    code-overflow: wrap
+lang: en
+self-contained: true
+---
+
+# Introduction
+
+Google Trends gives us an estimate of search volume. Let\'s explore if search popularity relates to other kinds of data. Perhaps there are patterns in Google\'s search volume and the price of Bitcoin or a hot stock like Tesla. Perhaps search volume for the term \"Unemployment Benefits\" can tell us something about the actual unemployment rate?
+
+Data Sources:
+
++ [Unemployment Rate from FRED](https://fred.stlouisfed.org/series/UNRATE/\)
++ [Google Trends](https://trends.google.com/trends/explore\)
++ [Yahoo Finance for Tesla Stock Price](https://finance.yahoo.com/quote/TSLA/history?p=TSLA\)
++ [Yahoo Finance for Bitcoin Stock Price](https://finance.yahoo.com/quote/BTC-USD/history?p=BTC-USD\)
+
+```{python}
+import pandas as pd
+import matplotlib.pyplot as plt
+
+df_tesla = pd.read_csv('data/TESLA Search Trend vs Price.csv')
+df_btc_search = pd.read_csv('data/Bitcoin Search Trend.csv')
+df_btc_price = pd.read_csv('data/Daily Bitcoin Price.csv')
+df_unemployment = pd.read_csv('data/UE Benefits Search vs UE Rate 2004-19.csv')
+
+```
+
+# Data Exploration
+
+**Challenge**:
+
++ What are the shapes of the dataframes?
++ What are the column names?
++ Complete the f-string to show the largest/smallest number in the search data column
+    + Largest value for Tesla in Web Search: print(f'Largest value for Tesla in Web Search: ')
+    + Smallest value for Tesla in Web Search: print(f'Smallest value for Tesla in Web Search: ')
++ Try the `.describe()` function to see some useful descriptive statistics
++ What is the periodicity of the time series data (daily, weekly, monthly)?
++ What does a value of 100 in the Google Trend search popularity actually mean?
+
+All web search values are relative to the maximum in the data itself. Thus, a 100 means that day the search for the term attained the maximum of the time window analyzed. A 20 means that that day the number of searches was 20% of the searches made in the day of the maximum.
+
+## Tesla
+
+```{python}
+# + What are the shapes of the dataframes?
+print(f"The data frame is {df_tesla.shape}.")
+
+# + What are the column names?
+print(f"The columns of this data frame are: {list(df_tesla.columns)}")
+
+# + Complete the f-string to show the largest/smallest number in the search data column
+#     + Largest value for Tesla in Web Search: print(f'Largest value for Tesla in Web Search: ')
+max_web_search = df_tesla['TSLA_WEB_SEARCH'].idxmax()
+print(f"The largest value in Web search was {df_tesla['TSLA_WEB_SEARCH'][max_web_search]}, and was on {df_tesla['MONTH'][max_web_search]}")
+
+#     + Smallest value for Tesla in Web Search: print(f'Smallest value for Tesla in Web Search: ')
+min_web_search = df_tesla['TSLA_WEB_SEARCH'].idxmin()
+print(f"The smallest value in Web search was {df_tesla['TSLA_WEB_SEARCH'][min_web_search]}, and was on {df_tesla['MONTH'][min_web_search]}")
+
+# + Try the `.describe()` function to see some useful descriptive statistics
+print(df_tesla.describe())
+
+# + What is the periodicity of the time series data (daily, weekly, monthly)? see https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#offset-aliases
+df_tesla.MONTH = pd.to_datetime(df_tesla.MONTH)
+print(f"The frequency of the data is {df_tesla.MONTH.dt.freq}, which means 'month at start'.")
+
+```
+
+## Unemployment Data
+
+```{python}
+# + What are the shapes of the dataframes?
+print(f"The data frame is {df_unemployment.shape}.")
+
+# + What are the column names?
+print(f"The columns of this data frame are: {list(df_unemployment.columns)}")
+
+# + Complete the f-string to show the largest/smallest number in the search data column
+#     + Largest value for Tesla in Web Search: print(f'Largest value for Tesla in Web Search: ')
+max_web_search = df_unemployment['UE_BENEFITS_WEB_SEARCH'].idxmax()
+print(f"The largest value in Web search was {df_unemployment['UE_BENEFITS_WEB_SEARCH'][max_web_search]}, and was on {df_unemployment['MONTH'][max_web_search]}")
+
+#     + Smallest value for Tesla in Web Search: print(f'Smallest value for Tesla in Web Search: ')
+min_web_search = df_unemployment['UE_BENEFITS_WEB_SEARCH'].idxmin()
+print(f"The smallest value in Web search was {df_unemployment['UE_BENEFITS_WEB_SEARCH'][min_web_search]}, and was on {df_unemployment['MONTH'][min_web_search]}")
+
+# + Try the `.describe()` function to see some useful descriptive statistics
+print(df_unemployment.describe())
+
+# + What is the periodicity of the time series data (daily, weekly, monthly)? see https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#offset-aliases
+df_unemployment.MONTH = pd.to_datetime(df_unemployment.MONTH)
+print(f"The frequency of the data is {df_unemployment.MONTH.dt.freq}, which means 'month at start'.")
+
+```
+
+
+## Bitcoin
+
+```{python}
+# + What are the shapes of the dataframes?
+print(f"The data frame is {df_btc_search.shape}.")
+
+# + What are the column names?
+print(f"The columns of this data frame are: {list(df_btc_search.columns)}")
+
+# + Complete the f-string to show the largest/smallest number in the search data column
+#     + Largest value for Tesla in Web Search: print(f'Largest value for Tesla in Web Search: ')
+max_web_search = df_btc_search['BTC_NEWS_SEARCH'].idxmax()
+print(f"The largest value in Web search was {df_btc_search['BTC_NEWS_SEARCH'][max_web_search]}, and was on {df_btc_search['MONTH'][max_web_search]}")
+
+#     + Smallest value for Tesla in Web Search: print(f'Smallest value for Tesla in Web Search: ')
+min_web_search = df_btc_search['BTC_NEWS_SEARCH'].idxmin()
+print(f"The smallest value in Web search was {df_btc_search['BTC_NEWS_SEARCH'][min_web_search]}, and was on {df_btc_search['MONTH'][min_web_search]}")
+
+# + Try the `.describe()` function to see some useful descriptive statistics
+print(df_btc_search.describe())
+
+# + What is the periodicity of the time series data (daily, weekly, monthly)? see https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#offset-aliases
+df_btc_search.MONTH = pd.to_datetime(df_btc_search.MONTH)
+print(f"The frequency of the data is {df_btc_search.MONTH.dt.freq}, which means 'month at start'.")
+
+```
+
+# Data Cleaning
+
+## Check for Missing Values
+
+**Challenge**: Are there any missing values in any of the dataframes? If so, which row/rows have missing values? How many missing values are there?
+
+Missing values for Tesla?:
+
+```{python}
+from IPython.display import Markdown, display
+
+display(Markdown(df_tesla.isna().sum().to_markdown(index = True)))
+```
+
+Missing values for U/E?:
+
+```{python}
+display(Markdown(df_unemployment.isna().sum().to_markdown(index = True)))
+```
+
+Missing values for BTC Search?:
+
+```{python}
+display(Markdown(df_btc_search.isna().sum().to_markdown(index = True)))
+```
+v
+Missing values for BTC price?:
+
+```{python}
+display(Markdown(df_btc_price.isna().sum().to_markdown(index = True)))
+```
+
+**Challenge**: Remove any missing values that you found.
+
+```{python}
+df_btc_price.dropna(inplace = True)
+```
+
+## Convert Strings to DateTime Objects
+
+**Challenge**: Check the data type of the entries in the DataFrame MONTH or DATE columns. Convert any strings in to Datetime objects. Do this for all 4 DataFrames. Double check if your type conversion was successful.
+
+```{python}
+# It was already done for all data frames, except btc_price
+df_btc_price.DATE = pd.to_datetime(df_btc_price.DATE)
+print(df_btc_price.DATE.dtypes)
+```
+
+## Converting from Daily to Monthly Data
+
+[Pandas .resample() documentation](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.resample.html)
+
+```{python}
+df_btc_price.set_index("DATE", inplace = True)
+resampled_btc_price = df_btc_price.resample("MS").mean()
+```
+
+# Data Visualisation
+
+**Challenge**: Plot the Tesla stock price against the Tesla search volume using a line chart and two different axes.
+
+```{python}
+#| label: basic-tsla-search-price
+#| fig-cap: "Basic TSLA search and price comparisson"
+
+#define subplots
+fig,ax = plt.subplots()
+
+#add first line to plot
+ax.plot(resampled_btc_price.index.to_numpy(), resampled_btc_price.CLOSE.to_numpy(), color="red")
+
+#add x-axis label
+ax.set_xlabel('Date', fontsize=14)
+
+#add y-axis label
+ax.set_ylabel('Price', color="red", fontsize=16)
+
+#define second y-axis that shares x-axis with current plot
+ax2 = ax.twinx()
+
+#add second line to plot
+ax2.plot(df_btc_search.MONTH.to_numpy(), df_btc_search.BTC_NEWS_SEARCH.to_numpy(), color="blue")
+
+#add second y-axis label
+ax2.set_ylabel('Searches', color="blue", fontsize=16)
+
+fig.show()
+```
+# Create locators for ticks on the time axis
+
+```{python}
+import matplotlib.dates as mdates
+
+years = mdates.YearLocator()
+months = mdates.MonthLocator()
+years_fmt = mdates.DateFormatter("%Y")
+
+```
+
+### Tesla Stock Price v.s. Search Volume
+
+**Challenge:** Plot the Tesla stock price against the Tesla search volume using a line chart and two different axes. Label one axis `TSLA Stock Price` and the other `Search Trend`.
+
+**Challenge**: Add colours to style the chart. This will help differentiate the two lines and the axis labels.
+
+```{python}
+#| label: tsla-price-volume
+#| fig-cap: "Tesla Stock Price and Search Volume"
+
+fig, ax1 = plt.subplots()
+ax2 = ax1.twinx()
+
+ax1.plot(df_tesla.MONTH.to_numpy(), df_tesla.TSLA_WEB_SEARCH.to_numpy(), color = "red")
+ax1.set_ylabel("Web Searches", color = "red")
+
+ax2.plot(df_tesla.MONTH.to_numpy(), df_tesla.TSLA_USD_CLOSE.to_numpy(), color = "blue")
+ax2.set_ylabel("Price", color = "blue")
+
+ax1.xaxis.set_major_formatter(years_fmt)
+ax1.xaxis.set_major_locator(years)
+ax1.xaxis.set_minor_locator(months)
+
+plt.title("This is the title")
+
+plt.show()
+```
+
+## Bitcoin (BTC) Price v.s. Search Volume
+
+**Challenge**: Create the same chart for the Bitcoin Prices vs. Search volumes.
+
+```{python}
+#| label: bitcoin-search-price
+#| fig-cap: "Bitcoin Searches and Price comparisson"
+
+df_btc_search.set_index("MONTH", inplace = True)
+merged_btc = pd.merge(resampled_btc_price, df_btc_search, right_index = True, left_index = True)
+
+fig, ax1 = plt.subplots()
+ax2 = ax1.twinx()
+
+ax1.plot(merged_btc.index.to_numpy(), merged_btc.CLOSE.to_numpy(), color = "blue", linestyle = "dashed")
+ax1.set_ylabel("Price", color = "blue")
+
+ax2.plot(merged_btc.index.to_numpy(), merged_btc.BTC_NEWS_SEARCH.to_numpy(), color = "red", marker = "o")
+ax2.set_ylabel("Searches", color = "red")
+
+ax1.xaxis.set_major_formatter(years_fmt)
+ax1.xaxis.set_major_locator(years)
+ax1.xaxis.set_minor_locator(months)
+
+plt.title("Bitcoin Price and Searches")
+plt.show()
+```
+
+## Unemployement Benefits Search vs. Actual Unemployment in the U.S.
+
+```{python}
+#| label: unemployment-search-level
+#| fig-cap: "Unemployment Searches and Actual Level"
+
+fig, ax1 = plt.subplots()
+ax2 = ax1.twinx()
+
+ax1.plot(df_unemployment.MONTH.to_numpy(), df_unemployment.UE_BENEFITS_WEB_SEARCH.to_numpy(), color = "blue")
+ax1.set_ylabel("Searches", color = "blue")
+
+ax2.plot(df_unemployment.MONTH.to_numpy(), df_unemployment.UNRATE.to_numpy(), color = "red")
+ax2.set_ylabel("Actual Unemployment Rate", color = "red")
+
+ax1.xaxis.set_major_formatter(years_fmt)
+ax1.xaxis.set_major_locator(years)
+ax1.xaxis.set_minor_locator(months)
+
+ax1.grid(axis = "x", which = "major", linestyle = "dashed")
+plt.title("Unemployment Rate and Searches")
+plt.show()
+```
+
+**Challenge**: Calculate the 3-month or 6-month rolling average for the web searches. Plot the 6-month rolling average search data against the actual unemployment. What do you see in the chart? Which line moves first?\n
+
+```{python}
+#| label: moving-average-unemployment
+#| fig-cap: "6 months moving average unemployment data"
+
+df_unemployment.set_index("MONTH", inplace = True)
+unemployment_rolling = df_unemployment.rolling(window = 6).mean()
+
+fig, ax1 = plt.subplots()
+ax2 = ax1.twinx()
+
+ax1.plot(unemployment_rolling.index.to_numpy(), unemployment_rolling.UE_BENEFITS_WEB_SEARCH.to_numpy(), color = "blue")
+ax1.set_ylabel("Searches", color = "blue")
+
+ax2.plot(unemployment_rolling.index.to_numpy(), unemployment_rolling.UNRATE.to_numpy(), color = "red")
+ax2.set_ylabel("Actual Unemployement Rate", color = "red")
+
+ax1.xaxis.set_major_formatter(years_fmt)
+ax1.xaxis.set_major_locator(years)
+ax1.xaxis.set_minor_locator(months)
+
+plt.title("6 Months Rolling Average Unemployment Searches and Actual Rate")
+plt.show()
+```
+
+## Including 2020 in Unemployment Charts
+
+**Challenge**: Read the data in the `UE Benefits Search vs UE Rate 2004-20.csv` into a DataFrame. Convert the MONTH column to Pandas Datetime objects and then plot the chart. What do you see?
+
+```{python}
+ue_2020 = pd.read_csv("data/UE Benefits Search vs UE Rate 2004-20.csv")
+ue_2020.MONTH = pd.to_datetime(ue_2020.MONTH)
+ue_2020.set_index("MONTH", inplace = True)
+
+fig, ax1 = plt.subplots()
+ax2 = ax1.twinx()
+
+ax1.plot(ue_2020.index.to_numpy(), ue_2020.UE_BENEFITS_WEB_SEARCH.to_numpy(), color = "blue")
+ax1.set_ylabel("Searches", color = "blue")
+
+ax2.plot(ue_2020.index.to_numpy(), ue_2020.UNRATE.to_numpy(), color = "red")
+ax2.set_ylabel("Actual Unemployement Rate", color = "red")
+
+ax1.xaxis.set_major_formatter(years_fmt)
+ax1.xaxis.set_major_locator(years)
+ax1.xaxis.set_minor_locator(months)
+
+plt.title("2004 - 2020 Unemployment Rate and Searches")
+plt.show()
+
+```
