@@ -1,0 +1,258 @@
+---
+title: "Using Plotly"
+format:
+  html:
+    code-fold: true
+    notebook-view: true
+    code-overflow: wrap
+lang: en
+self-contained: true
+---
+
+# Introduction
+
+We will compare apps in play store and learn some pandas features and plotly.
+
+# Data Cleaning
+**Challenge**: How many rows and columns does `df_apps` have? What are the column names? Look at a random sample of 5 different rows with [.sample()](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.sample.html).
+
+```{python}
+import pandas as pd
+from IPython.display import Markdown, display
+import plotly.express as px
+
+df = pd.read_csv("data/apps.csv")
+print(f"The data frame is {df.shape} (rows, columns).")
+print(f"The names of the columns are {list(df.columns)}.")
+print(df.sample(5))
+```
+
+## Drop Unused Columns
+
+**Challenge**: Remove the columns called `Last_Updated` and `Android_Version` from the DataFrame. We will not use these columns. 
+
+```{python}
+df.drop(columns = ["Last_Updated", "Android_Ver"], inplace = True)
+```
+
+## Find and Remove NaN values in Ratings
+
+**Challenge**: How may rows have a NaN value (not-a-number) in the Ratings column? Create DataFrame called `df_apps_clean` that does not include these rows. 
+
+```{python}
+print(f"The number of apps without rating is {df.Rating.isna().sum()}.")
+
+df_clean = df.dropna()
+```
+
+## Find and Remove Duplicates
+
+**Challenge**: Are there any duplicates in data? Check for duplicates using the [.duplicated()](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.duplicated.html) function. How many entries can you find for the \"Instagram\" app? Use [.drop_duplicates()](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.drop_duplicates.html) to remove any duplicates from `df_apps_clean`. 
+
+```{python}
+sum_duplicates = df_clean.duplicated().sum()
+print(f"There are {sum_duplicates} duplicated entries.")
+
+print(f"For instance, there are {df_clean[df_clean.App == 'Instagram'].index.size} records for 'Instagram'.")
+df_clean = df_clean.drop_duplicates(subset = "App", inplace = False)
+```
+
+# Find Highest Rated Apps
+
+**Challenge**: Identify which apps are the highest rated. What problem might you encounter if you rely exclusively on ratings alone to determine the quality of an app?
+
+```{python}
+print(f"There are {df_clean[df_clean.Rating == df_clean.Rating.max()].index.size} apps that have the maximum rating.")
+
+print(f"The problem of relying exclusively on ratings alone is that the average number of reviews of the top-rated apps is {df_clean[df_clean.Rating == df_clean.Rating.max()].Reviews.mean().round(2)}, which is a very small number.")
+
+```
+
+# Find 5 Largest Apps in terms of Size (MBs)
+
+**Challenge**: What\'s the size in megabytes (MB) of the largest Android apps in the Google Play Store. Based on the data, do you think there could be limit in place or can developers make apps as large as they please? 
+
+```{python}
+print(f"The largest apps of the store are {df_clean.Size_MBs.max()} MB in size.")
+
+print(f"Considering that {df_clean[df_clean.Size_MBs == df_clean.Size_MBs.max()].index.size} apps share that exact size, it appears there is a limit in place to the size of apps.")
+```
+
+# Find the 5 App with Most Reviews
+
+**Challenge**: Which apps have the highest number of reviews? Are there any paid apps among the top 50?
+
+```{python}
+df_clean[["App", "Reviews"]].sort_values(by = "Reviews", ascending = False).head(5)
+
+print("Among the top 50 apps with more reviews, the number of paid apps is:\n")
+
+display(Markdown(df_clean.sort_values(by = "Reviews", ascending = False).head(50).groupby("Type").size().reset_index(name = "N").to_markdown(index = False)))
+```
+
+# Plotly Pie and Donut Charts - Visualise Categorical Data: Content Ratings
+
+```{python}
+content_counts = df_clean.Content_Rating.value_counts()
+content_pie = px.pie(content_counts, values = "count", names = content_counts.index, title = "Number of apps by content rating")
+content_pie.show()
+```
+
+# Numeric Type Conversion: Examine the Number of Installs
+
+**Challenge**: How many apps had over 1 billion (that\'s right - BILLION) installations? How many apps just had a single install? 
+
+```{python}
+print(f"The type of the 'Installs' column is {type(df_clean.Installs.iloc[1])}, so it has to be converted to numeric.")
+
+df_clean.Installs = df_clean.Installs.str.replace(",", "")
+df_clean.Installs = pd.to_numeric(df_clean.Installs)
+
+print(f"The number of apps that has been installed only once is {df_clean.Installs.isin([1]).sum()}. The number of apps installed over one billion times is {df_clean.Installs.isin([1e9]).sum()}.")
+```
+# Find the Most Expensive Apps, Filter out the Junk, and Calculate a (ballpark) Sales Revenue Estimate
+
+```{python}
+df_clean.Price = df_clean.Price.str.replace("$", "")
+
+df_clean.Price = pd.to_numeric(df_clean.Price)
+
+print("The 5 most expensive apps are:\n")
+
+display(Markdown(df_clean[["App", "Price"]].sort_values(by = "Price", ascending = False).head(5).to_markdown(index = False)))
+```
+
+Remove all apps that cost more than $250, and add a column called `Revenue_Estimate` to the DataFrame. This column should hold the price of the app times the number of installs. What are the top 10 highest grossing paid apps according to this estimate? Out of the top 10 highest grossing paid apps, how many are games?
+
+```{python}
+revenue = df_clean[df_clean.Price <= 250].copy()
+revenue["Revenue_Estimate"] = revenue.Price * revenue.Installs
+
+revenue_formatted = revenue[["App", "Revenue_Estimate"]].sort_values(by = "Revenue_Estimate", ascending = False).head(10).copy()
+revenue_formatted["Revenue_Estimate"] = revenue_formatted.Revenue_Estimate.apply(lambda x: f"${x:,.2f}")
+
+print(f"Of the 10 highest grossing apps, {(revenue.sort_values(by = 'Revenue_Estimate', ascending = False).head(10).Category == 'GAME').sum()} are games.")
+```
+
+# Plotly Bar Charts & Scatter Plots: Analysing App Categories
+
+## Vertical Bar Chart - Highest Competition (Number of Apps)
+
+
+Find the number of apps in the categories with more apps.
+
+```{python}
+categories = df_clean.Category.value_counts().head(10)
+cat_plot = px.bar(categories, x = categories.index, y = "count", labels = {"count": "Number of Apps"}, title = "Number of apps in the top 10 categories")
+cat_plot.show()
+```
+
+## Horizontal Bar Chart - Most Popular Categories (Highest Downloads)
+
+```{python}
+downloads = df_clean.groupby("Category").agg({"Installs": "sum"}).sort_values(by = "Installs", ascending = False).head(10)
+
+downloads_plot = px.bar(downloads, x = "Installs", y = downloads.index, orientation = "h", title = "Number of installs in the 10 most installed categories")
+downloads_plot.show()
+```
+
+## Category Concentration - Downloads vs. Competition
+
+I created a different plot than the one in the course, because it had redundant information (number of installs).
+
+```{python}
+category_competition = df_clean.groupby("Category").agg({"Installs": "sum", "App": "nunique"}).sort_values(by = "Installs", ascending = False)
+
+competiton_plot = px.scatter(category_competition, y = "Installs", x = "App", color = category_competition.index, log_y = True, log_x = True)
+competiton_plot.show()
+```
+
+# Extracting Nested Data from a Column
+
+**Challenge**: How many different types of genres are there? Can an app belong to more than one genre? Check what happens when you use .value_counts() on a column with nested values? See if you can work around this problem by using the .split() function and the DataFrame\'s [.stack() method](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.stack.html). 
+
+There are some apps with more than one genre. In those cases, genres are separated by a semicolon.
+
+```{python}
+# this divides the string. El expand = True crea una nueva columna
+splitted = df_clean.Genres.str.split(";", expand = True)
+stacked = splitted.stack()
+print(f"The number of 'aparent' genres is {df_clean.Genres.nunique()}, but after splitting them, there are only {stacked.value_counts().size}")
+
+```
+
+# Colour Scales in Plotly Charts - Competition in Genres
+
+**Challenge**: Can you create this chart with the Series containing the genre data? 
+
+<img src=https://imgur.com/DbcoQli.png width=400>
+
+Try experimenting with the built in colour scales in Plotly. You can find a full list [here](https://plotly.com/python/builtin-colorscales/). 
+
+* Find a way to set the colour scale using the color_continuous_scale parameter. 
+* Find a way to make the color axis disappear by using coloraxis_showscale. 
+
+```{python}
+genre_count = stacked.value_counts().head(15)
+
+genre_plot = px.bar(genre_count, x = genre_count.index, y = "count", color = "count", title = "Number of Apps by Genre", labels = {"count": "Number of Apps"}, color_continuous_scale='Agsunset')
+genre_plot.update_layout(coloraxis_showscale = False)
+genre_plot.show()
+
+```
+
+# Grouped Bar Charts: Free vs. Paid Apps per Category
+
+**Challenge**: Use the plotly express bar [chart examples](https://plotly.com/python/bar-charts/#bar-chart-with-sorted-or-ordered-categories) and the [.bar() API reference](https://plotly.com/python-api-reference/generated/plotly.express.bar.html#plotly.express.bar) to create this bar chart:
+
+<img src=https://imgur.com/LE0XCxA.png style="width: 100%;">
+
+See if you can figure out how to get the look above by changing the `categoryorder` to "total descending" as outlined in the documentation here [here](https://plotly.com/python/categorical-axes/#automatically-sorting-categories-by-name-or-total-value).
+
+```{python}
+apps_category_type = df_clean.groupby(["Type", "Category"], as_index = False).App.count()
+cat_type_plot = px.bar(apps_category_type, x = "Category", color = "Type", y = "App", barmode = "group", log_y = True)
+cat_type_plot.update_layout(xaxis = {"categoryorder": "total descending"})
+cat_type_plot.show()
+```
+
+# Plotly Box Plots: Lost Downloads for Paid Apps
+
+**Challenge**: Create a box plot that shows the number of Installs for free versus paid apps. How does the median number of installations compare? Is the difference large or small?
+
+Use the [Box Plots Guide](https://plotly.com/python/box-plots/) and the [.box API reference](https://plotly.com/python-api-reference/generated/plotly.express.box.html) to create the following chart. 
+
+<img src=https://imgur.com/uVsECT3.png style="width: 100%;">
+
+```{python}
+installs_type_plot = px.box(df_clean, x = "Type", y = "Installs", log_y = True)
+installs_type_plot.show()
+```
+The median number of installs of the free apps is about one thousand times that of the paid apps.
+
+# Plotly Box Plots: Revenue by App Category
+
+**Challenge**: See if you can generate the chart below: 
+
+<img src=https://imgur.com/v4CiNqX.png style="width: 100%;">
+
+Looking at the hover text, how much does the median app earn in the Tools category? If developing an Android app costs $30,000 or thereabouts, does the average photography app recoup its development costs?
+
+Hint: I\'ve used \'min ascending\' to sort the categories. 
+
+```{python}
+df_clean["Revenue_estimate"] = df_clean.Price * df_clean.Installs
+
+revenue_plot = px.box(df_clean.loc[df_clean.Revenue_estimate > 0], x = "Category", y = "Revenue_estimate", log_y = True)
+revenue_plot.add_hline(y = 30000, line = {"color": "red"})
+revenue_plot.show()
+```
+
+# How Much Can You Charge? Examine Paid App Pricing Strategies by Category
+
+**Challenge**: What is the median price price for a paid app? Then compare pricing by category by creating another box plot. But this time examine the prices (instead of the revenue estimates) of the paid apps. I recommend using `{categoryorder\':\'max descending\'}` to sort the categories.
+
+```{python}
+price_plot = px.box(df_clean.loc[(df_clean.Type == "Paid") & (df_clean.Price <= 250)], x = "Category", y = "Price", log_y = True)
+price_plot.show()
+```
