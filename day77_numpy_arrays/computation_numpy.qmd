@@ -1,0 +1,365 @@
+---
+title: "Computation with Numpy and n-dimensional Arrays"
+format:
+  html:
+    code-fold: false
+    notebook-view: true
+    code-overflow: wrap
+lang: en
+self-contained: true
+---
+
+# Numpy n-dimensional Arrays
+
+```{python}
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy import datasets
+from PIL import Image
+```
+
+The crown jewel of NumPy is the ndarray. The ndarray is a homogeneous n-dimensional array object. What does that mean? 🤨
+
+A Python List or a Pandas DataFrame can contain a mix of strings, numbers, or objects (i.e., a mix of different types). Homogenous means all the data have to have the same data type, for example all floating-point numbers.
+
+And n-dimensional means that we can work with everything from a single column (1-dimensional) to the matrix (2-dimensional) to a bunch of matrices stacked on top of each other (n-dimensional).
+
+1-Dimension
+
+Let’s create a 1-dimensional array (i.e., a “vector”)
+
+```{python}
+my_array = np.array([1.1, 9.2, 8.1, 4.7])
+```
+
+We can see my_array is 1 dimensional by looking at its shape
+
+```{python}
+my_array.shape
+```
+
+We access an element in a ndarray similar to how we work with a Python List, namely by that element\'s index:
+
+```{python}
+my_array[2]
+```
+
+Let’s check the dimensions of my_array with the ndim attribute:
+
+```{python}
+my_array.ndim
+```
+
+2-Dimensions
+
+Now, let’s create a 2-dimensional array (i.e., a “matrix”)
+
+```{python}
+array_2d = np.array([[1, 2, 3, 9], [5, 6, 7, 8]])
+```
+
+Note we have two pairs of square brackets. This array has 2 rows and 4 columns. NumPy refers to the dimensions as axes, so the first axis has length 2 and the second axis has length 4.
+
+```{python}
+print(f'array_2d has {array_2d.ndim} dimensions')
+print(f'Its shape is {array_2d.shape}')
+print(f'It has {array_2d.shape[0]} rows and {array_2d.shape[1]} columns')
+print(array_2d)
+```
+
+Again, you can access a particular row or a particular value with the square bracket notation. To access a particular value, you have to provide an index for each dimension. We have two dimensions, so we need to provide an index for the row and for the column. Here’s how to access the 3rd value in the 2nd row:
+
+```{python}
+array_2d[1,2]
+```
+
+To access an entire row and all the values therein, you can use the : operator just like you would do with a Python List. Here’s the entire first row:
+
+```{python}
+array_2d[0, :]
+```
+
+N-Dimensions
+
+An array of 3 dimensions (or higher) is often referred to as a "tensor". Yes, that\'s also where Tensorflow, the popular machine learning tool, gets its name. A tensor simply refers to an n-dimensional array. Using what you\'ve learned about 1- and 2-dimensional arrays, can you apply the same techniques to tackle a more complex array?
+
+
+```{python}
+mystery_array = np.array([[[0, 1, 2, 3],
+                           [4, 5, 6, 7]],
+
+                         [[7, 86, 6, 98],
+                          [5, 1, 0, 4]],
+
+                          [[5, 36, 32, 48],
+                           [97, 0, 27, 18]]])
+```
+
+**Challenge**: 
+
++ How many dimensions does the array below have?
++ What is its shape (i.e., how many elements are along each axis)?
++ Try to access the value 18 in the last line of code.
++ Try to retrieve a 1-dimensional vector with the values [97, 0, 27, 18]
++ Try to retrieve a (3,2) matrix with the values [[ 0, 4], [ 7, 5], [ 5, 97]]
+
+```{python}
+print(mystery_array)
+print(f"The array has {mystery_array.ndim} dimensions.\n")
+print(f"The array\'s shape is {mystery_array.shape}, that is, it is {mystery_array.shape[0]} layers, {mystery_array.shape[1]} rows and {mystery_array.shape[2]} columns.")
+print(f"In order to access the number 18 in the last line of code, the code 'mystery_array[2,1,3]': {mystery_array[2, 1, 3]}.")
+print(f"In order to retrieve a 1-dimensional vector with the values [97, 0, 27, 18], the code 'mystery_array[2, 1, :]' should be used: {mystery_array[2, 1, :]}.")
+print(f"In order to retrieve a (3,2) matrix with the values [[0, 4], [7, 5], [5, 97]], the code 'mystery_array[:,:,0]' should be used: {mystery_array[:,:,0]}.")
+```
+
+# Generating and Manipulating ndarrays
+
+NumPy has many many pages of documentation on all of its extensive functionality. But rather than go through the list one by one, the best way to actually learn NumPy is to apply it to a series of small problems. That way you can familiarise yourself with how to use NumPy for the common use cases that you\'ll encounter on your own data science journey too.
+
+
+**Challenge 1**: Use `.arange()` to createa a vector a with values ranging from 10 to 29. You should get this:
+
+```{python}
+#| eval: false
+
+print(a)
+
+[10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29]
+```
+
+```{python}
+a = np.arange(start = 10, stop = 30, step = 1)
+print(a)
+```
+
+**Challenge 2**: Use Python slicing techniques on `a` to:
+
++ Create an array containing only the last 3 values of a
++ Create a subset with only the 4th, 5th, and 6th values
++ Create a subset of a containing all the values except for the first 12 (i.e., [22, 23, 24, 25, 26, 27, 28, 29])
++ Create a subset that only contains the even numbers (i.e, every second number)
+
+```{python}
+print(f"To print the last 3 values of a, the code 'a[-3:]' is used: {a[-3:]}.")
+print(f"To create a subset with the 4th, 5th and 6th values, the code 'a[3:6]' is used: {a[3:6]}.")
+print(f"To create a subset with all the values, except for the first 12, the code 'a[12:]' is used: {a[12:]}.")
+print(f"To create a subsert that only contains the even numbers, the code 'a[0::2]' is used: {a[0::2]}.")
+```
+
+**Challenge 3**: Reverse the order of the values in a, so that the first element comes last:
+
+[29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10]
+
+```{python}
+print(f"In order to reverse the values, the notation used is 'a[-1::-1]': {a[-1::-1]}.")
+```
+
+**Challenge 4**: Print out all the indices of the non-zero elements in this array: [6,0,9,0,0,5,0]
+
+```{python}
+b = np.array([6, 0, 9, 0, 0, 5, 0])
+print(np.where(b != 0))
+```
+
+**Challenge 5**: Use NumPy to generate a 3x3x3 array with random numbers
+
+```{python}
+c = np.random.rand(3, 3, 3)
+print(c)
+```
+
+Hint: Use the .random() function
+
+**Challenge 6**: Use .linspace() to create a vector x of size 9 with values spaced out evenly between 0 to 100 (both included).
+
+```{python}
+x = np.linspace(0, 100, num = 9)
+print(x)
+```
+
+**Challenge 7**: Use .linspace() to create another vector y of size 9 with values between -3 to 3 (both included). Then plot x and y on a line chart using Matplotlib.
+
+```{python}
+y = np.linspace(-3, 3, num = 9)
+plt.plot(x, y)
+plt.show()
+```
+
+**Challenge 8**: Use NumPy to generate an array called noise with shape 128x128x3 that has random values. Then use Matplotlib\'s .imshow() to display the array as an image.
+
+```{python}
+noise = np.random.rand(128, 128, 3)
+plt.imshow(noise)
+plt.show()
+```
+
+The random values will be interpreted as the RGB colours for each pixel.
+
+
+
+# Broadcasting, Scalars and Matrix Multiplication
+
+## Linear Algebra with Vectors
+
+NumPy is designed to do math (and do it well!). This means that NumPy will treat vectors, matrices and tensors in a way that a mathematician would expect. For example, if you had two vectors:
+
+```{python}
+
+v1 = np.array([4, 5, 2, 7])
+
+v2 = np.array([2, 1, 3, 3])
+```
+
+And you add them together
+
+```{python}
+v1 + v2
+```
+
+The result will be a ndarray where all the elements have been added together. In contrast, if we had two Python Lists
+
+```{python}
+list1 = [4, 5, 2, 7]
+list2 = [2, 1, 3, 3]
+
+```
+
+adding them together would just concatenate the lists.
+
+```{python}
+list1 + list2
+```
+Multiplying the two vectors together also results in an element by element operation:
+
+```{python}
+v1 * v2
+```
+
+Gives us array([ 8, 5, 6, 21]) since 4x2=8, 5x1=5 and so on. And for a Python List, this operation would not work at all.
+
+```{python}
+#| eval: false
+list1 * list2
+
+# Results in an error!
+```
+
+## Broadcasting
+
+Now, oftentimes you\'ll want to do some sort of operation between an array and a single number. In mathematics, this single number is often called a scalar. For example, you might want to multiply every value in your NumPy array by 2:
+
+```{python}
+v1 * 2
+```
+
+In order to achieve this result, NumPy will make the shape of the smaller array - our scalar - compatible with the larger array. This is what the documentation refers to when it mentions the term "broadcasting".
+
+The same rules about "expanding" the smaller ndarray hold true for 2 or more dimensions. We can see this with a 2-Dimensional Array:
+
+```{python}
+
+array_2d = np.array([[1, 2, 3, 4], 
+                     [5, 6, 7, 8]])
+
+print(array_2d * 3)
+```
+
+The scalar operates on an element by element basis.
+
+
+## Matrix Multiplication
+
+But what if we\'re not multiplying our ndarray by a single number? What if we multiply it by another vector or a 2-dimensional array? In this case, we follow the rules of linear algebra.
+
+```{python}
+
+a1 = np.array([[1, 3],
+               [0, 1],
+               [6, 2],
+               [9, 7]])
+     
+b1 = np.array([[4, 1, 3],
+               [5, 8, 5]])
+```
+
+**Challenge**: Let\'s multiply a1 with b1. Looking at the Wikipedia example above, work out the values for c12 and c33 on paper. Then use the .matmul() function or the @ operator to check your work.
+
+```{python}
+print(f"The result of np.matmul(a1, b1) is identical to 'a1 @ b1':\n {a1 @ b1}")
+```
+
+# Manipulating Images as ndarrays
+
+Images are nothing other than a collection of pixels. And each pixel is nothing other than value for a colour. And any colour can be represented as a combination of red, green, and blue (RGB).
+
+The Scipy library contains an image of a racoon under \'miscellaneous\' (misc). We an fetch it like so:
+
+```{python}
+
+img = datasets.face()
+```
+
+and display it using Matplotlib\'s .imshow()
+
+```{python}
+plt.imshow(img)
+plt.show()
+```
+
+**Challenge**: What is the data type of img? Also, what is the shape of img and how many dimensions does it have? What is the resolution of the image?
+
+```{python}
+print(f"The type of 'img' is {type(img)}.")
+
+print(f"The shape of 'img' is {img.shape}. It is a {img.ndim}-dimensional array.")
+print(f"The image has resolultion {img.shape[0]}x{img.shape[1]}.")
+```
+
+**Challenge**: Now can you try and convert the image to black and white? All you need need to do is use a formula.
+
+$ Y_{linear} = 0.2126R_{linear} + 0.7152G_{linear} + 0.0722B_{linear}$
+
+Y_linear is what we\'re after - our black and white image. However, this formula only works if our red, green and blue values are between 0 and 1 - namely in sRGB format. Currently the values in our img range from 0 to 255. So:
+
+Divide all the values by 255 to convert them to sRGB.
+
+```{python}
+s_img = img / 255
+```
+Multiply the sRGB array by the grey_vals array (provided) to convert the image to grayscale.
+
+```{python}
+grey_vals = np.array([0.2126, 0.7152, 0.0722])
+plt.imshow(s_img @ grey_vals, cmap = "gray")
+plt.show()
+```
+Finally use Matplotlib\'s .imshow() with the colormap parameter set to gray cmap=gray to display the result.
+
+**Challenge**: Can you manipulate the images by doing some operations on the underlying ndarrays? See if you can change the values in the ndarray so that:
+
+1) You flip the grayscale image upside down like so:
+
+```{python}
+flipped = np.flip(s_img @ grey_vals)
+plt.imshow(flipped, cmap = "gray")
+plt.show()
+```
+
+2) Rotate the colour image:
+
+```{python}
+rotated = np.rot90(img)
+plt.imshow(rotated)
+plt.show()
+```
+
+3) Invert (i.e., solarize) the colour image. To do this you need to convert all the pixels to their "opposite" value, so black (0) becomes white (255).
+
+```{python}
+solarized = 255 - img
+plt.imshow(solarized)
+plt.show()
+```
+
+
+
