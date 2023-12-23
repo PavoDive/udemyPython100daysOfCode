@@ -1,0 +1,424 @@
+---
+title: "Regression and Advanced Visualization with Seaborn"
+format:
+  html:
+    code-fold: false
+    notebook-view: true
+    code-overflow: wrap
+lang: en
+self-contained: true
+---
+
+# Explore and Clean the Data
+
+As with any dataset, the first steps are going to be data exploration and data cleaning. We need to get a better understanding of what we\'re dealing with. Since you\'ve gone through this process a number of times before on previous days, can you tackle the following challenges on your own? 
+
+```{python}
+import pandas as pd
+
+movies = pd.read_csv("data/cost_revenue_dirty.csv")
+```
+
+**Challenge 1**: Answer these questions about how the data is structured:
+
++ How many rows and columns does the dataset contain?
+
+```{python}
+print(f"The dataset contains {movies.shape} (rows, columns).")
+```
+
++ Are there any NaN values present?
+
+```{python}
+from IPython.display import Markdown, display
+
+display(Markdown(movies.isna().sum().to_markdown()))
+```
+
++ Are there any duplicate rows?
+
+```{python}
+print(f"There are {movies.duplicated().sum} duplicate movies.")
+```
+
++ What are the data types of the columns?
+
+```{python}
+display(Markdown(movies.apply(lambda col: type(col.iloc[0])).to_markdown()))
+```
+
+**Challenge 2**: Convert the USD_Production_Budget, USD_Worldwide_Gross, and USD_Domestic_Gross columns to a numeric format by removing $ signs and ,.
+
+```{python}
+movies[["USD_Production_Budget", "USD_Worldwide_Gross", "USD_Domestic_Gross"]] = movies[["USD_Production_Budget", "USD_Worldwide_Gross", "USD_Domestic_Gross"]].apply(lambda x: pd.to_numeric(x.str.replace(",","").str.replace("$", "")))
+
+display(Markdown(movies.apply(lambda col: type(col.iloc[0])).to_markdown()))
+```
+
+Note that domestic in this context refers to the United States.
+
+
+**Challenge 3**: Convert the Release_Date column to a Pandas Datetime type.
+
+```{python}
+movies["Release_Date"] = pd.to_datetime(movies["Release_Date"], format = "%m/%d/%Y")
+
+display(Markdown(movies.apply(lambda col: type(col.iloc[0])).to_markdown()))
+```
+
+Investigate the Films that had Zero Revenue
+
+Now that we\'ve done some legwork on cleaning our data, we can investigate our data set more thoroughly.
+
+**Challenge 1**: 
+
++ What is the average production budget of the films in the data set?
+
+```{python}
+print(f"The average production budget is ${movies.USD_Production_Budget.mean():,.2f}.")
+```
+
++ What is the average worldwide gross revenue of films?
+
+```{python}
+print(f"The average worldwide gross revenue of films is ${movies.USD_Worldwide_Gross.mean():,.2f}.")
+```
+
++ What were the minimums for worldwide and domestic revenue?
+
+```{python}
+print(f"The minimum worldwide revenue was ${movies.USD_Worldwide_Gross.min():,.2f}.")
+print(f"The minimum domestic revenue was ${movies.USD_Domestic_Gross.min():,.2f}.")
+```
+
++ Are the bottom 25% of films actually profitable or do they lose money?
+
+```{python}
+movies["profit"] = movies.USD_Worldwide_Gross - movies.USD_Production_Budget
+
+print("""If we calculate the profit as the difference between the woldwide gross and the production
+budget, then we can calculate the number of movies that made a profit and that are in the
+lower quartile of woldwide gross:\n""")
+
+display(Markdown(movies[movies['USD_Worldwide_Gross'] < movies.USD_Worldwide_Gross.quantile(.25)].groupby(movies["profit"] > 0).size().to_markdown()))
+```
+
++ What are the highest production budget and highest worldwide gross revenue of any film?
+
+```{python}
+print(f"The highest production budget of any film is ${movies.USD_Production_Budget.max():,.0f}.")
+print(f"The highest worldwide gross revenue of any film is ${movies.USD_Worldwide_Gross.max():,.0f}.")
+```
+
++ How much revenue did the lowest and highest budget films make?
+
+```{python}
+mask_lowest = movies.USD_Production_Budget == movies.USD_Production_Budget.min()
+print(f"The film with the lowest budget had a worldwide gross of ${movies[mask_lowest].USD_Worldwide_Gross.iloc[0]:,.0f}, and a profit of ${movies[mask_lowest].profit.iloc[0]:,.0f}.")
+
+mask_highest = movies.USD_Production_Budget == movies.USD_Production_Budget.max()
+print(f"The film with the highest budget had a worldwide gross of ${movies[mask_highest].USD_Worldwide_Gross.iloc[0]:,.0f}, and a profit of ${movies[mask_highest].profit.iloc[0]:,.0f}.")
+```
+
+**Challenge 2**: How many films grossed $0 domestically (i.e., in the United States)? What were the highest budget films that grossed nothing?
+
+```{python}
+print(f"The number of films that grossed $0 in the US is {movies[movies.USD_Domestic_Gross == 0].size:,.0f}.")
+print(f"The top 3 highest budget films that grossed nothing were:\n")
+formatted_df_us = movies[movies.USD_Domestic_Gross == 0].sort_values(by = "USD_Production_Budget", ascending = False)[["Movie_Title", "USD_Domestic_Gross", "profit"]].head(3)
+formatted_df_us[["USD_Domestic_Gross", "profit"]] = formatted_df_us[["USD_Domestic_Gross", "profit"]].map('${:,.0f}'.format)
+
+display(Markdown(formatted_df_us.to_markdown()))
+```
+
+**Challenge 3**: How many films grossed $0 worldwide? What are the highest budget films that had no revenue internationally (i.e., the biggest flops)?
+
+```{python}
+print(f"The number of films that grossed $0 worldwide is {movies[movies.USD_Worldwide_Gross == 0].size:,.0f}.")
+print(f"The top 3 highest budget films that grossed nothing were:\n")
+formatted_df = movies[movies.USD_Worldwide_Gross == 0].sort_values(by = "USD_Production_Budget", ascending = False)[["Movie_Title", "USD_Worldwide_Gross", "profit"]].head(3)
+formatted_df[["USD_Worldwide_Gross", "profit"]] = formatted_df[["USD_Worldwide_Gross", "profit"]].map('${:,.0f}'.format)
+
+display(Markdown(formatted_df.to_markdown()))
+
+```
+
+## Filter on Multiple Conditions: International Films
+
+So far, we\'ve created subsets for our DataFrames based on a single condition. But what if we want to select our data based on more than one condition? For example, which films made money internationally (i.e., data.USD_Worldwide_Gross != 0), but had zero box office revenue in the United States (i.e., data.USD_Domestic_Gross == 0)? 
+
+How would we create a filter for these two conditions? One approach is to use the .loc[] property combined with the bitwise and & operator.
+
+```{python}
+#| eval: false
+international_releases = data.loc[(data.USD_Domestic_Gross == 0) & 
+                                  (data.USD_Worldwide_Gross != 0)]
+```
+
+Why does this work? Pandas is built on top of NumPy, which uses Python\'s bitwise operators. And these bitwise operators allow us to do comparisons on an element by element basis in both NumPy and Pandas! Here\'s an example:
+
+However, we\'re also checking if the domestic revenue was zero and the worldwide revenue was not zero. Because the bitwise operator takes precedence, we need to include parentheses () around the comparisons we\'d like to prioritise.
+
+However, this is not the only technique we can use to make multiple comparisons.
+
+**Challenge**: Use the Pandas .query() function to accomplish the same thing. Create a subset for international releases that had some worldwide gross revenue, but made zero revenue in the United States.
+
+Hint: This time you\'ll have to use the `and` keyword.
+
+```{python}
+# both `and` or `&` can be used, but & requires the  use of parentheses. See https://stackoverflow.com/questions/76226121/what-is-the-correct-way-to-use-df-query-with-multiple-conditions
+gross_overseas = movies.query('(USD_Domestic_Gross == 0) & (USD_Worldwide_Gross > 0)')
+print(f"The subset dataframe has shape {gross_overseas.shape}.")
+```
+
+## Unreleased Films
+
+Now we can turn our attention to films in the dataset that were not released at the time the data was collected. This is why films like Singularity and Aquaman had zero revenue.
+
+
+**Challenge**:
+
++ Identify which films were not released yet as of the time of data collection (May 1st, 2018).
+
+```{python}
+not_released = movies.query('Release_Date >= "2018-05-01"')
+```
+
++ How many films are included in the dataset that have not yet had a chance to be screened in the box office? 
+
+```{python}
+print(f"The number of films that were released after the dataset's cut is {not_released.shape[0]}.")
+```
+
++ Create another DataFrame called data_clean that does not include these films. 
+
+```{python}
+data_clean = movies.query('Release_Date < "2018-05-01"')
+```
+
+**Bonus Challenge**: Films that Lost Money
+
+Having removed the unreleased films entirely can you calculate the percentage of films that did not break even at the box office? We already saw that more than the bottom quartile of movies appears to lose money when we ran `.describe()`. However, what is the true percentage of films where the costs exceed the worldwide gross revenue? 
+
+```{python}
+loosers = data_clean.groupby(data_clean["profit"] < 0, as_index = False).size()
+loosers = loosers.assign(prop = loosers["size"] / loosers["size"].sum())
+
+print(f"The percentage of movies that lost money is {100 * loosers[loosers['profit'] == True]['prop'].iloc[0]:.2f}%.")
+```
+
+# Seaborn Data Visualisation: Bubble Charts
+
+We\'re now ready to visualise our data. Today I want to introduce you to another popular data visualisation tool that you can use alongside plotly and Matplotlib: Seaborn. Seaborn is built on top of Matplotlib and it makes creating certain visualisations very convenient.
+
+## Import Seaborn
+
+The first step is adding Seaborn to our notebook. By convention we\'ll use the name sns.
+
+```{python}
+import seaborn as sns
+```
+
+## Seaborn Scatter Plots
+
+To create a .scatterplot(), all we need to do is supply our DataFrame and the column names that we\'d like to see on our axes.
+
+```{python}
+sns.scatterplot(data=data_clean,
+                x='USD_Production_Budget', 
+                y='USD_Worldwide_Gross')
+```
+
+That should look familiar. 😊 Because Seaborn is built on top of Matplotlib, we can dive into the Matplotlib layer anytime to configure our chart. For example, we can increase the size of our figure:
+
+And to style our chart we can simply configure the Axes object that is returned from sns.scatterplot().
+
+Here\'s how:
+
+```{python}
+plt.figure(figsize=(8,4), dpi=200)
+
+ax = sns.scatterplot(data=data_clean,
+                     x='USD_Production_Budget', 
+                     y='USD_Worldwide_Gross')
+
+ax.set(ylim=(0, 3000000000),
+       xlim=(0, 450000000),
+       ylabel='Revenue in $ billions',
+       xlabel='Budget in $100 millions')
+
+plt.show()
+```
+
+Here we\'re diving into the Matplotlib layer to set the limits on the axes and change the labels.
+
+## From Scatter Plot to Bubble Chart
+
+But the reason we\'re using Seaborn is because of the hue and size parameters that make it very easy to create a bubble chart. These parameters allow us to colour the data and change their size according to one of the columns in our DataFrame.
+
+```{python}
+plt.figure(figsize=(8,4), dpi=200)
+ax = sns.scatterplot(data=data_clean,
+                     x='USD_Production_Budget', 
+                     y='USD_Worldwide_Gross',
+                     hue='USD_Worldwide_Gross', # colour
+                     size='USD_Worldwide_Gross',) # dot size
+
+ax.set(ylim=(0, 3000000000),
+       xlim=(0, 450000000),
+       ylabel='Revenue in $ billions',
+       xlabel='Budget in $100 millions',)
+
+plt.show()
+```
+
+Now our higher grossing movies are bigger and darker on our chart. That\'s super handy. But Seaborn offers a number of convenient styling options as well.
+
+To set the styling on a single chart (as opposed to all the charts in the entire notebook) we can use Python\'s `with` keyword. We\'ve seen with used already when it comes to opening files in previous lessons.
+
+```{python}
+plt.figure(figsize=(8,4), dpi=200)
+
+# set styling on a single chart
+with sns.axes_style('darkgrid'):
+    ax = sns.scatterplot(data=data_clean,
+                         x='USD_Production_Budget', 
+                         y='USD_Worldwide_Gross',
+                         hue='USD_Worldwide_Gross',
+                         size='USD_Worldwide_Gross')
+
+ax.set(ylim=(0, 3000000000),
+       xlim=(0, 450000000),
+       ylabel='Revenue in $ billions',
+       xlabel='Budget in $100 millions')
+```
+
+In addition to `darkgrid`, Seaborn has a number of built-in themes. so you can style your chart very quickly. Try out `whitegrid`, `dark`,  or `ticks` for example.
+
+**Challenge**: Now that you\'ve seen how to create a beautiful bubble chart in Seaborn, it\'s time to create your own. Can you write the code to replicate this chart? Notice how we are actually representing THREE dimensions in this chart: the budget, the release date, and the worldwide revenue. This is what makes bubble charts so awesomely informative.
+
+
+# Floor Division: A Trick to Convert Years to Decades
+
+In our bubble charts, we\'ve seen how massively the industry has changed over time, especially from the 1970s onwards. This makes me think it makes sense to separate our films out by decade. Here\'s what I\'m after:
+
+**Challenge**: Can you create a column in data_clean that has the decade of the movie release. For example, a film released in 1992 or 1999 should have 1990 in the Decade column.
+
+Here is one approach that you can follow:
+
++ Create a DatetimeIndex object from the Release_Date column.
++ Grab all the years from the DatetimeIndex object using the .year property.
++ Use floor division // to convert the year data to the decades of the films.
++ Add the decades as a Decade column to the data_clean DataFrame.
+	
+	
+# Plotting Linear Regressions with Seaborn
+
+Let\'s visualise the relationship between the movie budget and the worldwide revenue using linear regression. Seaborn makes this incredibly easy with the .regplot() function.
+
+```{python}
+sns.regplot(data=old_films, 
+            x='USD_Production_Budget',
+            y='USD_Worldwide_Gross')
+```
+This creates a scatter plot and draws a linear regression line together with the confidence interval at the same time.
+
+To style the chart further, we can once again, drop into the Matplotlib layer and supply keyword arguments as dictionaries. We can customise the scatter plot (e.g., by changing the transparency of the dots) and the regression line itself (e.g., by changing the colour).
+
+```{python}
+plt.figure(figsize=(8,4), dpi=200)
+with sns.axes_style("whitegrid"):
+  sns.regplot(data=old_films, 
+            x='USD_Production_Budget', 
+            y='USD_Worldwide_Gross',
+            scatter_kws = {'alpha': 0.4},
+            line_kws = {'color': 'black'})
+
+```
+What do we see here? Well, first off we can spot Cleopatra on the far right. But also, we see that many lower budget films made much more money! The relationship between the production budget and movie revenue is not very strong. Many points on the left are very far away for the line, so the line appears not to capture the relationship between budget and revenue very well at all!
+
+But does the same hold true for the newer films?
+
+**Challenge**: Use Seaborn\'s .regplot() to show the scatter plot and linear regression line against the new_films.
+
++ Style the chart
++ Put the chart on a `darkgrid`.
++ Set limits on the axes so that they don\'t show negative values.
++ Label the axes on the plot "Revenue in $ billions" and "Budget in $ millions".
++ Provide HEX colour codes for the plot and the regression line. Make the dots dark blue (#2f4b7c) and the line orange (#ff7c43).
+
+Interpret the chart
++ Do our data points for the new films align better or worse with the linear regression than for our older films?
++ Roughly how much would a film with a budget of $150 million make according to the regression line?
+	
+# Use scikit-learn to Run Your Own Regression
+
+Let\'s dive into our linear regression model a bit more. We are using a univariate regression. This is a regression with a single explanatory variable (our movie BUDGET). Explanatory variables are also referred to as features in machine learning terminology.
+
+Using our data on budgets, the linear regression estimates the best possible line to fit our movie revenues. The regression line has the following structure:
+
+To find the best possible line, our regression will estimate the y-intercept ("theta zero") and the slope ("theta one"). The line\'s intercept on the y-axis tells us how much revenue a movie would make if the budget was 0. The slope tells us how much extra revenue we get for a $1 increase in the movie budget.
+
+So how can we find out what our model\'s estimates are for theta-one and theta-zero? And how can we run our own regression, regardless of whether we want to visualise it on a chart? For that, we can use scikit-learn.
+
+## Import scikit-learn
+
+Let\'s add the LinearRegression from scikit-learn to our notebook.
+
+Now we can run a LinearRegression. First, let\'s create a LinearRegression object that will do the work for us.
+
+```{python}
+regression = LinearRegression()
+```
+
+Now we should specify our features and our targets (i.e., our response variable). You will often see the features named capital X and the target named lower case y:
+
+```{python}
+# Explanatory Variable(s) or Feature(s)
+X = pd.DataFrame(new_films, columns=['USD_Production_Budget'])
+
+# Response Variable or Target
+y = pd.DataFrame(new_films, columns=['USD_Worldwide_Gross']) 
+
+```
+
+Our LinearRegression does not like receiving Pandas Series (e.g., new_films.USD_Production_Budget), so I\'ve created some new DataFrames here.
+
+Now it\'s time to get to work and run the calculations:
+
+```{python}
+# Find the best-fit line
+regression.fit(X, y)
+
+```
+
+That\'s it. Now we can look at the values of theta-one and theta-zero from the equation above.
+
+Both intercept_ and coef_ are simply attributes of the LinearRegression object. Don\'t worry about the underscores at the end, these are simply part of the attribute names that the scikit-learn developers have chosen.
+
+How do we interpret the y-intercept? Literally, means that if a movie budget is $0, the estimated movie revenue is -$8.65 million. Hmm... so this is clearly unrealistic. Why would our model tell us such nonsense? Well, the reason is that we are specifying what the model should be ahead of time - namely a straight line - and then finding the best straight line for our data. Considering that you can\'t have negative revenue or a negative budget, we have to be careful about interpreting our very simple model too literally. After all, it\'s just an estimate and this estimate will be the most accurate on the chart where we have the most data points (rather than at the extreme left or right).
+
+What about the slope? The slope tells us that for every extra $1 in the budget, movie revenue increases by $3.1. So, that\'s pretty interesting. That means the higher our budget, the higher our estimated revenue. If budgets are all that matter to make lots of money, then studio executives and film financiers should try and produce the biggest films possible, right? Maybe that\'s exactly why we\'ve seen a massive increase in budgets over the past 30 years.
+
+## R-Squared: Goodness of Fit
+
+One measure of figuring out how well our model fits our data is by looking at a metric called r-squared. This is a good number to look at in addition to eyeballing our charts.
+
+```{python}
+
+# R-squared
+regression.score(X, y)
+
+```
+
+We see that our r-squared comes in at around 0.558. This means that our model explains about 56% of the variance in movie revenue. That\'s actually pretty amazing, considering we\'ve got the simplest possible model, with only one explanatory variable. The real world is super complex, so in many academic circles, if a researcher can build a simple model that explains over 50% or so of what is actually happening, then it\'s a pretty decent model.
+
+Remember how we were quite sceptical about our regression looking at the chart for our old_films? 
+
+
+**Challenge**: Run a linear regression for the old_films. Calculate the intercept, slope and r-squared. How much of the variance in movie revenue does the linear model explain in this case?
+
+**Challenge**: You\'ve just estimated the intercept and slope for the Linear Regression model. Now we can use it to make a prediction! For example, how much global revenue does our model estimate for a film with a budget of $350 million?
+
+
+

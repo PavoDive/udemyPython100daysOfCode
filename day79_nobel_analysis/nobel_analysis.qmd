@@ -1,0 +1,508 @@
+---
+title: "Nobel Prize Analysis"
+format:
+  html:
+    code-fold: true
+    notebook-view: true
+    code-overflow: wrap
+lang: en
+self-contained: true
+---
+
+**Challenge 1**: Preliminary data 
+
+```{python}
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+import plotly.express as px
+from IPython.display import Markdown, display
+
+df_data = pd.read_csv("data/nobel_prize_data.csv")
+```
+
++ What is the shape of df_data? How many rows and columns?
+
+```{python}
+print(f"The dataframe has sape {df_data.shape}.")
+```
+
++ What are the column names and what kind of data is inside of them?
+
+```{python}
+print(f"The names of columns are: {list(df_data.columns)}.")
+```
+
++ In which year was the Nobel prize first awarded?
+
+```{python}
+print(f"The first year the Nobel Prize was awarded was {df_data.year.min()}.")
+```
+
++ Which year is the latest year included in the dataset?
+
+```{python}
+print(f"The last year included in the dataset is {df_data.year.max()}.")
+```
+
+**Challenge 2**:
+
++ Are there any duplicate values in the dataset?
+
+```{python}
+print(f"There are {df_data.duplicated().sum()} duplicate rows in the data.")
+```
+
++ Are there NaN values in the dataset?
+
+```{python}
+nan_values = df_data.isna().sum()
+print(f"The number of NaN values in the dataset is {nan_values.sum()}.")
+```
+
++ Which columns tend to have NaN values?
+
+```{python}
+print(f"The columns with more than 200 NaN values are: {list(nan_values[nan_values > 200].index)}.")
+```
+
++ How many NaN values are there per column?
+
+```{python}
+display(Markdown(nan_values.to_markdown()))
+```
+
++ Why do these columns have NaN values?
+
+```{python}
+print("The columns related to organization may have NaNs because of winners without an affiliation with an organization")
+print("The records without 'motivation' are peace prices.")
+```
+
+**Challenge 3**: 
+
++ Convert the birth_date column to Pandas Datetime objects
+
+```{python}
+df_data["birth_date"] = pd.to_datetime(df_data["birth_date"], format = "%Y-%m-%d")
+```
+
++ Add a Column called share_pct which has the laureates\' share as a percentage in the form of a floating-point number.
+
+```{python}
+df_data["share_pct"] = df_data["prize_share"].apply(lambda x: eval(x))
+```
+
+# plotly Bar & Donut Charts: Analyse Prize Categories & Women Winning Prizes
+
+**Challenge 1**: Come up with 3 Questions
+
+A big part of data science is coming up with questions that you\'d like to explore. This is the most difficult aspect to teach in a tutorial because it\'s completely open-ended and requires some creativity. Often times you will be asking questions of the data, that it actually cannot answer - and that\'s ok. That\'s all part of the process of discovery.
+
+Pause here for a moment and think about the kind of data you saw in the columns. Write down at least 3 questions that you\'d like to explore as part of this analysis. For example, your question might go like: "What percentage of the Nobel laureates were women?" or "How many prizes were given out in each category". Practice coming up with a few of your own questions.
+
+In the upcoming lessons, you might find that we will write the code to answer some of your questions. And if not, your questions make for a great exercise to take this analysis even further.
+
+The challenges below are all based on questions we\'re going to ask the data:
+
+**Challenge 2**: Create a donut chart using plotly which shows how many prizes went to men compared to how many prizes went to women. What percentage of all the prizes went to women?
+
+```{python}
+gender = df_data[~df_data["sex"].isna()].groupby(by = "sex", as_index = False).size()
+gender.columns = ["Sex", "Awardees"]
+gender_plot = px.pie(gender, names = gender.Sex, values = gender.Awardees, hole = .3)
+gender_plot.show()
+```
+
+**Challenge 3**: 
+
++ What are the names of the first 3 female Nobel laureates?
+
+```{python}
+first_females = df_data.sort_values("year").query('sex == "Female"').head(3)[["full_name", "motivation", "birth_country", "organization_name"]]
+display(Markdown(first_females.to_markdown(index = False)))
+```
+
+**Challenge 4**: Did some people get a Nobel Prize more than once? If so, who were they?
+
+```{python}
+more_once = df_data["full_name"].duplicated()
+more_once_names = df_data[more_once]["full_name"]
+more_once_winners = df_data[df_data["full_name"].isin(more_once_names)][["full_name", "year"]].sort_values("full_name")
+display(Markdown(more_once_winners.to_markdown(index = False)))
+
+```
+
+**Challenge 5**: 
+
++ In how many categories are prizes awarded?
+
+```{python}
+print(f"The number of categories of the Nobel prize is {df_data[~df_data['category'].isna()]['category'].nunique()}.")
+```
+
++ Create a plotly bar chart with the number of prizes awarded by category.
+
+```{python}
+prizes_category = df_data.groupby("category", as_index = False).size().sort_values("size", ascending = False)
+prizes_category.columns = ["Category", "Number of Prizes"]
+prizes_category_plot = px.bar(prizes_category, x = prizes_category["Category"], y = prizes_category["Number of Prizes"])
+prizes_category_plot.show()
+```
+
++ Use the color scale called Aggrnyl to colour the chart, but don\'t show a color axis.
+
+```{python}
+display(Markdown("**I refuse to use two different scales to show the same variable!**"))
+```
+
+**Challenge 6**: 
+
++ When was the first prize in the field of Economics awarded?
+
+```{python}
+print(f'The first Nobel prize in Economics was awarded in {df_data[df_data["category"] == "Economics"]["year"].min()}.')
+
+```
+
++ Who did the prize go to?
+
+```{python}
+first_year_economics = df_data[df_data["category"] == "Economics"]["year"].min()
+first_economics_names = df_data.query("category == 'Economics' & (year == @first_year_economics)")["full_name"]
+print(f"The first economics Nobel prize was awarded to {list(first_economics_names)}.")
+```
+
+**Challenge 7**: Create a plotly bar chart that shows the split between men and women by category.
+
+```{python}
+categories_gender = df_data.groupby(["sex", "category"], as_index = False).size()
+categories_gender.columns = ["Sex", "Category", "Number of Awardees"]
+categories_gender_plot = px.bar(categories_gender, x = categories_gender["Category"], y = categories_gender["Number of Awardees"], color = categories_gender["Sex"])
+categories_gender_plot.update_xaxes(categoryorder='total descending')
+categories_gender_plot.show()
+```
+
+# Using Matplotlib to Visualise Trends over Time
+
+Now let\'s look at how things have changed over time. This will give us a chance to review what we learnt about creating charts with two y-axes in Matplotlib and generating arrays with NumPy.
+
+**Challenge 1**: 
+
++ Are more prizes awarded recently than when the prize was first created? Show the trend in awards visually.
+
+```{python}
+prizes_year = df_data.groupby("year", as_index = False).size()
+prizes_year.columns = ["Year", "Prizes Awarded"]
+# this is plotly and worked well, but apparently the class required matplotlib
+# prizes_year_plot = px.scatter(prizes_year, x = "Year", y = "Prizes Awarded", trendline="ols")
+# prizes_year_plot.show()
+
+# this is matplotlib
+plt.scatter(x = prizes_year["Year"], y = prizes_year["Prizes Awarded"])
+plt.show()
+```
+
++ Create a 5 year rolling average of the number of prizes (Hint: see previous lessons analysing Google Trends).
+
+```{python}
+prizes_ma5 = prizes_year.rolling(5).mean()
+```
+
++ Using Matplotlib superimpose the rolling average on a scatter plot.
+
+```{python}
+
+f, ax = plt.subplots()
+ax.scatter(prizes_year["Year"], y = prizes_year["Prizes Awarded"])
+ax.plot(prizes_ma5["Year"].to_numpy(), prizes_ma5["Prizes Awarded"].to_numpy(), color = "coral")
+plt.ylabel("Number of Prizes Awarded")
+plt.xlabel("Year")
+f.show()
+```
+
+
++ Show a tick mark on the x-axis for every 5 years from 1900 to 2020. (Hint: you\'ll need to use NumPy).
+
+```{python}
+import numpy as np
+
+seq_5_year = np.arange(1900, 2021, 5)
+
+f, ax = plt.subplots()
+ax.scatter(prizes_year["Year"], y = prizes_year["Prizes Awarded"])
+ax.plot(prizes_ma5["Year"].to_numpy(), prizes_ma5["Prizes Awarded"].to_numpy(), color = "coral")
+plt.ylabel("Number of Prizes Awarded")
+plt.xlabel("Year")
+ax.set_xticks(seq_5_year)
+f.show()
+```
+
+**Challenge 2**: Investigate if more prizes are shared than before.
+
++ Calculate the average prize share of the winners on a year by year basis.
+
+```{python}
+prize_share = df_data.groupby("year", as_index = False)["share_pct"].mean()
+```
+
++ Calculate the 5 year rolling average of the percentage share.
+
+```{python}
+prize_share["rolling_share_pct"] = prize_share["share_pct"].rolling(5).mean()
+```
+
++ Copy-paste the cell from the chart you created above.
+
+```{python}
+f, ax = plt.subplots()
+ax.scatter(prizes_year["Year"], y = prizes_year["Prizes Awarded"])
+ax.plot(prizes_ma5["Year"].to_numpy(), prizes_ma5["Prizes Awarded"].to_numpy(), color = "coral")
+plt.ylabel("Number of Prizes Awarded")
+plt.xlabel("Year")
+ax.set_xticks(seq_5_year)
+#f.show()
+```
+
++ Modify the code to add a secondary axis to your Matplotlib chart.
+
+```{python}
+ax2 = ax.twinx()
+ax2.plot(prize_share["year"].to_numpy(), prize_share["rolling_share_pct"].to_numpy(), color = "seagreen")
+ax2.set_ylabel("Rolling average of percent shared", color = "seagreen")
+plt.show()
+```
+
++ Plot the rolling average of the prize share on this chart.
++ See if you can invert the secondary y-axis to make the relationship even more clear.
+
+```{python}
+f, ax = plt.subplots()
+ax.scatter(prizes_year["Year"], y = prizes_year["Prizes Awarded"])
+ax.plot(prizes_ma5["Year"].to_numpy(), prizes_ma5["Prizes Awarded"].to_numpy(), color = "coral")
+plt.ylabel("Number of Prizes Awarded")
+plt.xlabel("Year")
+ax.set_xticks(seq_5_year)
+
+ax2 = ax.twinx()
+ax2.plot(prize_share["year"].to_numpy(), prize_share["rolling_share_pct"].to_numpy(), color = "seagreen")
+ax2.set_ylabel("Rolling average of percent shared", color = "seagreen")
+
+# this is the bit that inverts the axis
+ax2.invert_yaxis()
+
+plt.show()
+```
+	
+# A Choropleth Map and the Countries with the Most Prizes
+
+For this next bit, we\'re going to compare which countries actually get the most prizes. And we\'re also going to look at in which categories those prizes are awarded. This has me feeling a little like I\'m at the Olympics 😊.
+
+
+Challenge 1: Top 20 Country Ranking
+
++ Create a Pandas DataFrame called top20_countries that has the two columns. The prize column should contain the total number of prizes won.
+
+```{python}
+prizes_countries = df_data.groupby("birth_country_current", as_index = False).size().sort_values("size", ascending = False)
+prizes_countries.columns = ["Country", "Prize"]
+top20_countries = prizes_countries.head(20)
+```
+
++ Then use plotly to create a horizontal bar chart showing the number of prizes won by each country. Here\'s what you\'re after:
+
+```{python}
+px.bar(top20_countries, y = "Country", x = "Prize", orientation = "h").show()
+```
+
+**Challenge 2**: Choropleth Map
+
++ Create this choropleth map using the plotly documentation:
+
+```{python}
+prizes_iso_country = df_data.groupby("ISO", as_index = False).size()
+prizes_iso_country.columns = ["iso_alpha", "Prizes"]
+df = px.data.gapminder().query("year==2007")
+
+df = pd.merge(df, prizes_iso_country, on = "iso_alpha")
+fig = px.choropleth(df, locations="iso_alpha",
+                    color="Prizes",
+                    hover_name="country", # column to add to hover information
+                    color_continuous_scale=px.colors.sequential.OrRd)
+fig.show()
+```
+
+**Challenge 3**: Country Bar Chart with Prize Category
+
+See if you can divide up the plotly bar chart you created above to show the which categories made up the total number of prizes. Here\'s what you\'re aiming for:
+
+```{python}
+prizes_countries_categories = df_data.groupby(["birth_country_current", "category"], as_index = False).size().sort_values("size", ascending = False)
+prizes_countries_categories.columns = ["Country", "Category", "Prize"]
+top20_countries_categories = prizes_countries_categories[prizes_countries_categories["Country"].isin(list(top20_countries["Country"]))]
+
+countries_categories_plot = px.bar(top20_countries_categories, y = "Country", x = "Prize", color = "Category", orientation = "h")
+countries_categories_plot.update_yaxes(categoryorder='total descending')
+countries_categories_plot.show()
+```
+
+**Challenge 4**: Prizes by Country over Time
+
+Every country\'s fortunes wax and wane over time. Investigate how the total number of prizes awarded changed over the years.
+
++ When did the United States eclipse every other country in terms of the number of prizes won?
++ Which country or countries were leading previously?
++ Calculate the cumulative number of prizes won by each country in every year. Again, use the birth_country_current of the winner to calculate this.
++ Create a plotly line chart where each country is a coloured line.
+
+```{python}
+countries_trend = df_data.groupby(["birth_country_current", "year"], as_index = False).agg({"prize": pd.Series.count}).sort_values(["birth_country_current", "year"])
+countries_trend["Cumulative prizes"] = countries_trend.groupby("birth_country_current")["prize"].cumsum()
+countries_trend.columns = ["Country", "Year", "Prizes", "Cumulative Prizes"]
+
+px.line(countries_trend, x = "Year", y = "Cumulative Prizes", color = "Country").show()
+```
+
+# Create Sunburst Charts for a Detailed Regional Breakdown of Research Locations
+
+**Challenge 1**: Many Nobel laureates are affiliated with a university, a laboratory, or a research organisation (apart from Literature and Peace prize winners as we\'ve seen). But the world is a big place. Which research institutions had the most Nobel laureates working there at the time of making the discovery?
+
++ Create a bar chart showing the organisations affiliated with the Nobel laureates. It should looks something like this:
++ Which organisations make up the top 20?
++ How many Nobel prize winners are affiliated with the University of Chicago and Harvard University?
+
+```{python}
+organizations = df_data.groupby("organization_name", as_index = False).agg({"prize": pd.Series.count}).sort_values("prize", ascending = False)
+px.bar(organizations.head(20), "organization_name", "prize").show()
+```
+
+**Challenge 2**: Each research organisation is located in a particular city. Are some cities hot spots for scientific discoveries? Where do major discoveries tend to take place?
+
++ Create another plotly bar chart graphing the top 20 organisation cities of the research institutions associated with a Nobel laureate.
++ Where is the number one hotspot for discoveries in the world?
++ Which city in Europe has had the most discoveries?
+
+```{python}
+cities = df_data.groupby("organization_city", as_index = False).agg({"prize": pd.Series.count}).sort_values("prize", ascending = False)
+px.bar(cities.head(20), "organization_city", "prize").show()
+```
+
+**Challenge 3**: Contrast the above chart with the birth city of the Nobel laureates. Would you expect to see a similar ranking for where the laureates are born versus where most discoveries are made? Would you expect to see the most populous cities producing the highest number of Nobel laureates?
+
++ Create a plotly bar chart graphing the top 20 birth cities of Nobel laureates.
++ Use a named colour scale called Plasma for the chart.
++ What percentage of the United States prizes came from Nobel laureates born in New York?
++ How many Nobel laureates were born in London, Paris and Vienna?
++ Out of the top 5 cities, how many are in the United States?
+
+```{python}
+birth_cities = df_data.groupby("birth_city", as_index = False).agg({"prize": pd.Series.count}).sort_values("prize", ascending = False)
+px.bar(birth_cities.head(20), "birth_city", "prize").show()
+```
+
+**Challenge 4**: Create a DataFrame that groups the number of prizes by organisation.
+
++ Then use the plotly documentation to create a sunburst chart
++ Click around in your chart, what do you notice about Germany and France?
+
+```{python}
+organization_detail = df_data.groupby(["organization_country", "organization_city", "organization_name"], as_index = False).agg({"prize": pd.Series.count})
+organization_detail.rename(columns = {"organization_country": "Country", "organization_city": "City", "organization_name": "Organization"}, inplace = True)
+sb = px.sunburst(organization_detail, path = ["Country", "City", "Organization"], values = "prize")
+sb.show()
+```
+
+# Unearthing Patterns in the Laureate Age at the Time of the Award
+
+How old are the Nobel laureates at the time when they win the prize? Does this vary by category? Also, how has the age of the laureates changed over time?
+
+
+**Challenge 1**: Calculate the age of the laureate in the year of the ceremony and add this as a column called winning_age to the df_data DataFrame. Hint: you can use this to help you.
+
+```{python}
+df_data["winning_age"] = df_data["year"] - df_data["birth_date"].dt.year
+```
+
+**Challenge 2**: 
+
++ What are the names of the youngest and oldest Nobel laureate?
++ Who were the oldest and the youngest winners?
+
+```{python}
+max_age = df_data["winning_age"].max()
+min_age = df_data["winning_age"].min()
+print(f"The oldest winners were {df_data.query('winning_age == @max_age').full_name.iloc[0]}, who at the time of winning were {df_data.query('winning_age == @max_age')['winning_age'].iloc[0]}.")
+
+print(f"The youngest winners were {df_data.query('winning_age == @min_age').full_name.iloc[0]}, who at the time of winning were {df_data.query('winning_age == @min_age')['winning_age'].iloc[0]}.")
+```
+
++ What is the average age of a winner?
+
+```{python}
+print(f"The average age of the Nobel winner is {df_data['winning_age'].mean():.1f} years of age.")
+```
+
++ 75% of laureates are younger than what age when they receive the prize?
+
+```{python}
+print(f"The upper quartile of the age of winners is {df_data['winning_age'].quantile(.75):.1f} years of age.")
+```
+
++ Use Seaborn to create histogram to visualise the distribution of laureate age at the time of winning. Experiment with the number of bins to see how the visualisation changes.
+
+```{python}
+sns.displot(df_data, x = "winning_age", bins = 20)
+plt.show()
+```
+
+**Challenge 3**: Calculate the descriptive statistics for the age at the time of the award.
+
+```{python}
+display(Markdown(df_data["winning_age"].describe().to_markdown()))
+```
+
+**Challenge 4**: Are Nobel laureates being nominated later in life than before? Have the ages of laureates at the time of the award increased or decreased over time?
+
++ Use Seaborn to create a .regplot with a trendline.
++ Set the lowess parameter to True to show a moving average of the linear fit.
++ According to the best fit line, how old were Nobel laureates in the years 1900-1940 when they were awarded the prize?
++ According to the best fit line, what age would it predict for a Nobel laureate in 2020?
+
+```{python}
+age_years = df_data.groupby("year", as_index = False).agg({"winning_age": pd.Series.mean})
+sns.regplot(age_years, x = "year", y = "winning_age", lowess = True)
+plt.show()
+```
+
+**Challenge 5**: How does the age of laureates vary by category?
+
++ Use Seaborn\'s .boxplot() to show how the mean, quartiles, max, and minimum values vary across categories. Which category has the longest "whiskers"?
++ In which prize category are the average winners the oldest?
++ In which prize category are the average winners the youngest?
++ You can also use plotly to create the box plot if you like.
+
+```{python}
+sns.boxplot(df_data, x = "category", y = "winning_age")
+plt.ylabel("Age at the time of winning")
+plt.show()
+```
+
+**Challenge 6**: Now use Seaborn\'s .lmplot() and the row parameter to create 6 separate charts for each prize category. Again set lowess to True.
+
++ What are the winning age trends in each category?
++ Which category has the age trending up and which category has the age trending down?
++ Is this .lmplot() telling a different story from the .boxplot()?
++ Create a third chart with Seaborn. This time use .lmplot() to put all 6 categories on the same chart using the hue parameter.
+
+```{python}
+age_categories = df_data.groupby(["category", "year"], as_index = False).agg({"winning_age": pd.Series.mean})
+sns.lmplot(age_categories, x = "year", y = "winning_age", row = "category")
+plt.show()
+```
+
+```{python}
+fig = px.scatter(age_categories, x= "year", y = "winning_age", facet_col = "category", facet_col_wrap = 2, trendline = "ols", labels = {"winning_age": "Age at the time of winning"})
+fig.for_each_annotation(lambda a: a.update(text=a.text.split("=")[-1]))
+
+fig.show()
+```
