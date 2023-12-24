@@ -1,0 +1,281 @@
+---
+title: "T-tests and Distributions"
+format:
+  html:
+    code-fold: true
+    notebook-view: true
+    code-overflow: wrap
+lang: en
+self-contained: true
+---
+
+```{python}
+import pandas as pd
+import matplotlib.pyplot as plt
+import plotly.express as px
+import numpy as np
+import seaborn as sns
+```
+
+# Preliminary Data Exploration and Visualising Births & Deaths at Vienna Hospital
+
+You (aka Dr Semmelweis) are working at Vienna General Hospital. Let\'s take a closer look at the data you\'ve been collecting on the number of births and maternal deaths throughout the 1840s.
+
+![Original table](data/original_table.jpg)
+
+**Challenge 1**: Preliminary Data Exploration
+
+```{python}
+df_annual = pd.read_csv("data/annual_deaths_by_clinic.csv")
+df_monthly = pd.read_csv("data/monthly_deaths.csv")
+```
+
++ What is the shape of df_yearly and df_monthly? How many rows and columns?
+
+```{python}
+print(f"The shape of the annual dataframe is {df_annual.shape}.")
+print(f"The shape of the monthly dataframe is {df_monthly.shape}.")
+```
+
++ What are the column names?
+
+```{python}
+print(f"The column names of the annual dataframe are {list(df_annual.columns)}.")
+print(f"The column names of the monthly dataframe are {list(df_monthly.columns)}.")
+```
+
++ Which years are included in the dataset?
+
+```{python}
+print(f'The annual df has the following years: {list(df_annual["year"].unique())}.')
+
+df_monthly["date"] = pd.to_datetime(df_monthly["date"], format = "%Y-%m-%d")
+print(f"The monthly df has the following years: {list(df_monthly['date'].dt.year.unique())}.")
+```
+
++ Are there any NaN values or duplicates?
+
+```{python}
+print(f"The annual data has {df_annual.duplicated().sum()} duplicates.")
+print(f"The monthly data has {df_monthly.duplicated().sum()} duplicates.")
+```
+
++ What were the average number of births that took place per month?
+
+```{python}
+print(f"The average number of births per month is {df_monthly['births'].mean():,.1f} births.")
+```
+
++ What were the average number of deaths that took place per month?
+
+```{python}
+print(f"The average number of deaths per month is {df_monthly['deaths'].mean():,.1f} deaths.")
+```
+
+**Challenge 2**: Percentage of Women Dying in Childbirth
+
+How dangerous was childbirth in the 1840s in Vienna?
+
++ Using the annual data, calculate the percentage of women giving birth who died throughout the 1840s at the hospital.
+
+```{python}
+births_deaths = df_annual.agg({'births': pd.Series.sum, 'deaths': pd.Series.sum})
+
+print(f"The percentage of women who gave birth and died is {100 * births_deaths['deaths'] / births_deaths['births']:.2f}%.")
+```
+
+In comparison, the United States recorded 18.5 maternal deaths per 100,000 or 0.018% in 2013 (source).
+
+**Challenge 3**: Visualise the Total Number of Births 🤱 and Deaths 💀 over Time
+
++ Create a Matplotlib chart with twin y-axes. It should look something like this:
++ Format the x-axis using locators for the years and months (Hint: we did this in the Google Trends notebook)
++ Set the range on the x-axis so that the chart lines touch the y-axes
++ Add gridlines
++ Use skyblue and crimson for the line colours
++ Use a dashed line style for the number of deaths
++ Change the line thickness to 3 and 2 for the births and deaths respectively.
++ Do you notice anything in the late 1840s?
+
+```{python}
+fig, ax = plt.subplots()
+ax.plot(df_monthly["date"].to_numpy(), df_monthly["births"].to_numpy(), color = "skyblue")
+ax.set_ylabel("Births", color = "skyblue")
+ax2 = ax.twinx()
+ax2.plot(df_monthly["date"].to_numpy(), df_monthly["deaths"].to_numpy(), color = "crimson")
+ax2.set_ylabel("Deaths", color = "crimson")
+plt.show()
+```
+
+# Analysing the Yearly Data Split By Clinic
+
+Welcome to your workplace...
+
+There are two maternity wards at the Vienna General Hospital: clinic 1 and clinic 2. Clinic 1 was staffed by all-male doctors and medical students, and clinic 2 was staffed by female midwives.
+
+**Challenge 1**: The Yearly Data Split by Clinic
+
+Let\'s turn our attention to the annual data. Use plotly to create line charts of the births and deaths of the two different clinics at the Vienna General Hospital.
+
++ Which clinic is bigger or more busy judging by the number of births?
++ Has the hospital had more patients over time?
++ What was the highest number of deaths recorded in clinic 1 and clinic 2?
+
+```{python}
+px.line(df_annual.melt(id_vars = ["year", "clinic"]), x = "year", y = "value", color = "variable", facet_col = "clinic").show()
+```
+
+**Challenge 2**: Calculate the Proportion of Deaths at Each Clinic
+
++ Calculate the proportion of maternal deaths per clinic. That way we can compare like with like.
++ Work out the percentage of deaths for each row in the df_yearly DataFrame by adding a column called "pct_deaths".
++ Calculate the average maternal death rate for clinic 1 and clinic 2 (i.e., the total number of deaths per the total number of births).
++ Create another plotly line chart to see how the percentage varies year over year with the two different clinics.
++ Which clinic has a higher proportion of deaths?
++ What is the highest monthly death rate in clinic 1 compared to clinic 2?
+
+```{python}
+df_annual["pct_deaths"] = df_annual["deaths"] / df_annual["births"]
+px.line(df_annual, x = "year", y = "pct_deaths", color = "clinic").show()
+```
+
+The story continues...
+
+At first, Dr Semmelweis thought that the position of the women giving birth was the issue. In clinic 2, the midwives\' clinic, women gave birth on their sides. In the doctors\' clinic, women gave birth on their backs. So, Dr. Semmelweis, had women in the doctors\' clinic give birth on their sides. However, this had no effect on the death rate.
+
+Next, Dr Semmelweis noticed that whenever someone on the ward died, a priest would walk through clinic 1, past the women\'s beds ringing a bell 🔔. Perhaps the priest and the bell ringing terrified the women so much after birth that they developed a fever, got sick and died. Dr Semmelweis had the priest change his route and stop ringing the bell 🔕. Again, this had no effect.
+
+At this point, Dr Semmelweis was so frustrated he went on holiday to Venice. Perhaps a short break would clear his head. When Semmelweis returned from his vacation, he was told that one of his colleagues, a pathologist, had fallen ill and died. His friend had pricked his finger while doing an autopsy on a woman who had died from childbed fever and subsequently got very sick himself and died. 😮
+
+Looking at the pathologist\'s symptoms, Semmelweis realised the pathologist died from the same thing as the women he had autopsied.  This was his breakthrough: anyone could get sick from childbed fever, not just women giving birth!
+
+This is what led to Semmelweis\' new theory. Perhaps there were little pieces or particles of a corpse that the doctors and medical students were getting on their hands while dissecting the cadavers during an autopsy. And when the doctors delivered the babies in clinic 1, these particles would get inside the women giving birth who would then develop the disease and die.
+
+The Effect of Handwashing
+
+In June 1846, Dr Semmelweis ordered everyone on his medical staff to start cleaning their hands and instruments not just with soap and water but with a chlorine solution (he didn\'t know it at the time, but chlorine is an amazing disinfectant). The reason Dr Semmelweis actually chose the chlorine was that he wanted to get rid of any smell on doctors\' hands after an autopsy. No one knew anything about bacteria, germs or viruses at the time.
+
+
+**Challenge 1**: The Effect of Handwashing
+
++ Add a column called "pct_deaths" to df_monthly that has the percentage of deaths per birth for each row.
++ Create two subsets from the df_monthly data: before and after Dr Semmelweis ordered washing hand.
++ Calculate the average death rate prior to June 1846.
++ Calculate the average death rate after June 1846.
+
+```{python}
+df_monthly["pct_deaths"] = df_monthly["deaths"] / df_monthly["births"]
+df_monthly["cohort"] = np.where(df_monthly["date"] <= "1846-06-01", "Prior", "After")
+
+pct_deaths_prior = df_monthly.query('cohort == "Prior"')['pct_deaths'].mean()
+pct_deaths_after = df_monthly.query('cohort == "After"')['pct_deaths'].mean()
+print(f"The average death rate prior to June 1846 was {100 * pct_deaths_prior:.2f}%, while after that date it was {100 * pct_deaths_after:.2f}%.")
+
+```
+
+**Challenge 2**: Calculate a Rolling Average of the Death Rate
+
+Create a DataFrame that has the 6-month rolling average death rate prior to mandatory handwashing.
+
+Hint: You\'ll need to set the dates as the index in order to avoid the date column being dropped during the calculation
+
+```{python}
+rolling_pct_death = df_monthly.copy()
+rolling_pct_death["rolling_avg_pct_death"] = rolling_pct_death["pct_deaths"].rolling(6).mean()
+```
+
+**Challenge 3**: Highlighting Subsections of a Line Chart
+
+Copy-paste and then modify the Matplotlib chart from before to plot the monthly death rates (instead of the total number of births and deaths). The chart should look something like this:
+
++ Add 3 separate lines to the plot: the death rate before handwashing, after handwashing, and the 6-month moving average before handwashing.
++ Show the monthly death rate before handwashing as a thin dashed black line.
++ Show the moving average as a thicker, crimson line.
++ Show the rate after handwashing as a skyblue line with round markers.
++ Look at the code snippet in the documentation to see how you can add a legend to the chart.
+
+```{python}
+f = plt.plot(rolling_pct_death.query("cohort == 'Prior'")["date"].to_numpy(), rolling_pct_death.query("cohort == 'Prior'")["pct_deaths"].to_numpy(), "r-",
+         rolling_pct_death.query("cohort == 'After'")["date"].to_numpy(), rolling_pct_death.query("cohort == 'After'")["pct_deaths"].to_numpy(), "g-",
+         rolling_pct_death["date"].to_numpy(), rolling_pct_death["rolling_avg_pct_death"].to_numpy(), "b-")
+
+plt.legend(["Prior", "After", "Moving average 6"])
+plt.show()
+```
+
+# Visualising Distributions and Testing for Statistical Significance
+
+There are even more powerful arguments we can make to convince our fellow doctors in clinic 1 of the virtues of handwashing. The first are statistics regarding the mean monthly death rate. The second are compelling visualisations to accompany the statistics.
+
+**Challenge 1**: Calculate the Difference in the Average Monthly Death Rate
+
++ What was the average percentage of monthly deaths before handwashing (i.e., before June 1847)?
++ What was the average percentage of monthly deaths after handwashing was made obligatory?
+
+```{python}
+print("This was solved above.")
+```
+
++ By how much did handwashing reduce the average chance of dying in childbirth in percentage terms?
+
+```{python}
+chance_dying = df_monthly.groupby("cohort", as_index = False)["pct_deaths"].mean()
+pct_improvement = (chance_dying.query("cohort == 'After'").pct_deaths.iloc[0] - chance_dying.query("cohort == 'Prior'").pct_deaths.iloc[0]) / chance_dying.query("cohort == 'Prior'").pct_deaths.iloc[0]
+print(f"The chance of dying was reduced in {100 * abs(pct_improvement):.2f}%.")
+```
+
++ How do these numbers compare to the average for all the 1840 s that we calculated earlier?
++ How many times lower are the chances of dying after handwashing compared to before?
+	
+**Challenge 2**: Using Box Plots to Show How the Death Rate Changed Before and After Handwashing
+
+The statistic above is impressive, but how do we show it graphically? With a box plot we can show how the quartiles, minimum, and maximum values changed in addition to the mean.
+
++ Use NumPy\'s .where() function to add a column to df_monthly that shows if a particular date was before or after the start of handwashing.
++ Then use plotly to create box plot of the data before and after handwashing.
++ How did key statistics like the mean, max, min, 1st and 3rd quartile changed as a result of the new policy
+
+```{python}
+px.box(df_monthly, x = "cohort", y = "pct_deaths").show()
+```
+
+**Challenge 3**: Use Histograms to Visualise the Monthly Distribution of Outcomes
+
++ Create a plotly histogram to show the monthly percentage of deaths.
++ Use docs to check out the available parameters. Use the color parameter to display two overlapping histograms.
++ The time period of handwashing is shorter than not handwashing. Change histnorm to percent to make the time periods comparable.
++ Make the histograms slightly transparent
++ Experiment with the number of bins on the histogram. Which number works well in communicating the range of outcomes?
++ Just for fun, display your box plot on the top of the histogram using the marginal parameter
+
+```{python}
+sns.displot(df_monthly, x = "pct_deaths", hue = "cohort", bins = 20, multiple = "dodge")
+plt.show()
+```
+	
+**Challenge 4**: Use a Kernel Density Estimate (KDE) to visualise a smooth distribution
+
++ Use Seaborn\'s .kdeplot() to create two kernel density estimates of the pct_deaths, one for before handwashing and one for after.
++ Use the shade parameter to give your two distributions different colours.
++ What weakness in the chart do you see when you just use the default parameters?
++ Use the clip parameter to address the problem.
+
+```{python}
+sns.displot(df_monthly, x = "pct_deaths", hue = "cohort", kind = "kde", fill = True)
+plt.show()
+```
+
+**Challenge 5**: Use a T-Test to Show Statistical Significance
+
+Use a t-test to determine if the differences in the means are statistically significant or purely due to chance.
+
++ If the p-value is less than 1% then we can be 99% certain that handwashing has made a difference to the average monthly death rate.
++ Import stats from scipy
++ Use the .ttest_ind() function to calculate the t-statistic and the p-value
++ Is the difference in the average proportion of monthly deaths statistically significant at the 99% level?
+	
+```{python}
+from scipy import stats
+t_test_result = stats.ttest_ind(df_monthly.query("cohort == 'Prior'")["pct_deaths"], df_monthly.query("cohort == 'After'")["pct_deaths"])
+print(f"The p-value of the t-test is {t_test_result[1]:.2e}, which means there is statistical significance in the difference between cohorts.")
+```	
