@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="box">
+  <h1>Oooops!</h1>
+  {% if no_univs %}
+
+  <b>No Universities found. Check the spelling and try again!</b>
+  
+  {% else %}
+  <b>Please write the name of a valid Country.</b>
+
+  {% endif %}
+</div>
+
+{% endblock %}

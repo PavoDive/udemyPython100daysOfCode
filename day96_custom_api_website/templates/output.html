@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="box">
+  <h1>I found {{ universities|length }} Universities in {{ country.title() }}</h1>
+  <body>
+    <table>
+      <!-- table header -->
+      {% if universities %}
+      <tr>
+	{% for key in universities[0] %}
+	<th> {{ key }} </th>
+	{% endfor %}
+      </tr>
+      {% endif %}
+
+      <!-- table rows -->
+      {% for dict_item in universities %}
+      <tr>
+	{% for key, value in dict_item.items() %}
+	{% if key == "Page" %}
+	<td><a href="{{ value }}"> {{ value }} </a></td>
+	{% else %}
+	<td> {{ value }} </td>
+	{% endif %}
+	{% endfor %}
+      </tr>
+      {% endfor %}
+    </table>
+  </body>
+</div>
+{% endblock %}

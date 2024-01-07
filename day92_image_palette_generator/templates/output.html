@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="box">
+  <h1>Color Analysis Output</h1>
+  <body>
+    These are the top 20 colors present in the image.<br>
+    <img src="static/images/{{user_image}}" alt="User Image" width="500"><br>
+    <table>
+    {% for column in df.columns %}
+    {% if column == 'hex' %}
+    <th style="background-color: lightgray;">{{ column }}</th>
+    {% else %}
+    <th>{{ column }}</th>
+    {% endif %}
+    {% endfor %}
+
+    {% for index, row in df.iterrows() %}
+    <tr>
+      {% for column, cell in row.items() %}
+      {% if column == 'hex' %}
+      <td style="background-color: {{ cell }};">{{ cell }}</td>
+      {% else %}
+      <td>{{ cell }}</td>
+      {% endif %}
+      {% endfor %}
+    </tr>
+    {% endfor %}
+    </table>
+  </body>
+</div>
+{% endblock %}
