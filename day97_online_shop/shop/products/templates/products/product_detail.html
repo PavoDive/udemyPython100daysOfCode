@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <title>HTML5 Boilerplate</title>
+</head>
+
+<body>
+{% block content %}
+{% if user.is_authenticated %}
+<p>Welcome {{user.username}}</p>
+<p>Click <a href="{% url 'account_logout' %}">here</a> if you want to log out.</p>
+{% else %}
+Please <a href="{% url 'account_login' %}">Login</a>
+{% endif %}
+
+<h1>Product Detail</h1>
+<h2>{{ product.product_name }}</h2>
+<p>{{ product.product_description }}</p>
+<h3>Price: ${{ product.product_price }}</h3>
+<img src="{{ product.product_image }}" height="1" 400="">
+<p>Hurry up, there are only {{ product.available_amount }} units left!</p>
+<a href="{% url 'add_to_cart' product_id=product.id %}">Buy now!</a>
+{% endblock %}
+
+
+</body>
+</html>
+

@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Product Catalog</h1>
+{% if products_list %}
+<ul>
+  {% for product in products_list %}
+  <li><a href="/products/{{ product.id }}/">{{ product.product_name }}</a></li>
+  {% endfor %}
+</ul>
+{% else %}
+<p>No products are available.</p>
+{% endif %}
+
+{% endblock %}

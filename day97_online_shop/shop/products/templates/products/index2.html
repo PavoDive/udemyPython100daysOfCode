@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <title>HTML5 Boilerplate</title>
+</head>
+
+<body>
+{% block content %}
+{% if user.is_authenticated %}
+<p>Welcome {{user.username}}</p>
+<p>Click <a href="{% url 'account_logout' %}">here</a> if you want to log out.</p>
+{% else %}
+Please <a href="{% url 'account_login' %}">Login</a>
+{% endif %}
+
+<h1>Product Catalog</h1>
+{% if products_list %}
+<ul>
+  {% for product in products_list %}
+  <li><a href="/products/{{ product.id }}/">{{ product.product_name }}</a><img src="{{ product.product_image }}" alt="{{ product.product_name }}" height=100></li>
+  {% endfor %}
+</ul>
+{% else %}
+<p>No products are available.</p>
+{% endif %}
+
+{% endblock %}
+
+
+</body>
+</html>
+

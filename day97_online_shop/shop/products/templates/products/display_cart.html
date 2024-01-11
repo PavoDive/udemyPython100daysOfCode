@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Shopping Cart</title>
+</head>
+
+<body>
+    <h1>Your Shopping Cart</h1>
+
+    {% if user_cart %}
+        <ul>
+            {% for cart_entry in user_cart %}
+                <li>
+                    <p>{{ cart_entry.ordered_products.product_name }} - Quantity: {{ cart_entry.quantity }}</p>
+                    <a href="{% url 'remove_from_cart' cart_entry.id %}">Remove from Cart</a>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>Your cart is empty.</p>
+    {% endif %}
+
+	<a href="{% url 'index' %}">Continue Shopping</a>
+	{% if user_cart %}
+	<a href="{% url 'checkout' %}">Proceed to Checkout</a>
+	{% else %}
+    <p>Your cart is empty.</p>
+    {% endif %}
+
+</body>
+
+</html>
