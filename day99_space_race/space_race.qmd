@@ -1,0 +1,192 @@
+---
+title: "Space Race Data Analysis"
+format:
+  html:
+    code-fold: true
+    notebook-view: true
+    code-overflow: wrap
+lang: en
+self-contained: true
+---
+
+# Introduction
+
+![](https://i.imgur.com/9hLRsjZ.jpg)
+
+This dataset was scraped from [nextspaceflight.com](https://nextspaceflight.com/launches/past/?page=1) and includes all the space missions since the beginning of Space Race between the USA and the Soviet Union in 1957!
+
+## Import Statements
+
+```{python}
+import numpy as np
+import pandas as pd
+import plotly.express as px
+import matplotlib.pyplot as plt
+import seaborn as sns
+from iso3166 import countries
+from datetime import datetime, timedelta
+from IPython.display import Markdown, display
+import re
+
+pd.options.display.float_format = '{:,.2f}'.format
+```
+
+## Load the Data
+
+```{python}
+df_data = pd.read_csv('data/mission_launches.csv', index_col = False)
+```
+
+# Preliminary Data Exploration
+
+* What is the shape of `df_data`?
+* How many rows and columns does it have?
+* What are the column names?
+* Are there any NaN values or duplicates?
+
+```{python}
+print(df_data.shape)
+print(df_data.columns)
+
+```
+
+## Data Cleaning - Check for Missing Values and Duplicates
+
+Consider removing columns containing junk data.
+
+```{python}
+print(df_data.info())
+df_data.drop(columns = ["Unnamed: 0.1", "Unnamed: 0"], inplace = True)
+```
+# Descriptive Statistics
+
+## Number of Launches per Company
+
+Create a chart that shows the number of space mission launches by organisation.
+
+```{python}
+launches_organization = df_data.value_counts("Organisation")
+launches_organization.plot(kind = "bar", logy = True, ylabel = "Number of Launches")
+plt.show()
+```
+# Number of Active versus Retired Rockets
+
+How many rockets are active compared to those that are decomissioned?
+
+```{python}
+rocket_status = df_data.value_counts("Rocket_Status").to_frame()
+rocket_status.reset_index(inplace = True)
+rocket_status["Rocket_Status"] = rocket_status["Rocket_Status"].str.replace("Status", "")
+display(Markdown(rocket_status.to_markdown(index = False)))
+```
+
+# Distribution of Mission Status
+
+How many missions were successful?
+How many missions failed?
+
+```{python}
+mission_status = df_data.value_counts("Mission_Status").to_frame()
+mission_status.reset_index(inplace = True)
+display(Markdown(mission_status.to_markdown(index = False)))
+```
+# How Expensive are the Launches?
+
+Create a histogram and visualise the distribution. The price column is given in USD millions (careful of missing values).
+
+```{python}
+df_data["Price"] = df_data["Price"].str.replace(",", "").astype("float")
+plt.figure()
+df_data["Price"].plot.hist(bins = 60)
+plt.show()
+```
+
+# Use a Choropleth Map to Show the Number of Launches by Country
+
+* Create a choropleth map using [the plotly documentation](https://plotly.com/python/choropleth-maps/)
+* Experiment with [plotly's available colours](https://plotly.com/python/builtin-colorscales/). I quite like the sequential colour `matter` on this map.
+* You'll need to extract a `country` feature as well as change the country names that no longer exist.
+
+
+```{python}
+df_data["country"] = [re.sub(r"(^.*)(, )([A-Za-z ]+$)", r"\3", location) for location in df_data["Location"]]
+df_data.loc[df_data["country"] == "Shahrud Missile Test Site", "country"] = "Iran"
+df_data.loc[df_data["country"] == "New Mexico", "country"] = "USA"
+df_data.loc[df_data["country"] == "Yellow Sea", "country"] = "China"
+df_data.loc[df_data["country"] == "Pacific Missile Range Facility", "country"] = "USA"
+df_data.loc[df_data["country"] == "Pacific Ocean", "country"] = "USA"
+df_data.loc[df_data["country"] == "Barents Sea", "country"] = "Russia"
+df_data.loc[df_data["country"] == "Gran Canaria", "country"] = "Spain"
+df_data.loc[df_data["country"] == "Russia", "country"] = "Russian Federation"
+df_data.loc[df_data["country"] == "Iran", "country"] = "Iran, Islamic Republic of"
+df_data.loc[df_data["country"] == "North Korea", "country"] = "Korea, Democratic People's Republic of"
+df_data.loc[df_data["country"] == "South Korea", "country"] = "Korea, Republic of"
+
+
+df_data["ISO"] = [countries.get(country).alpha3 for country in df_data["country"]]
+launches_iso_country = df_data.groupby("ISO", as_index = False).size()
+launches_iso_country.columns = ["iso_alpha", "Launches"]
+df = px.data.gapminder().query("year==2007")
+
+df = pd.merge(df, launches_iso_country, on = "iso_alpha")
+fig = px.choropleth(df, locations="iso_alpha",
+                    color="Launches",
+                    hover_name="country", # column to add to hover information
+                    color_continuous_scale=px.colors.sequential.OrRd)
+fig.show()
+
+```
+
+
+# Create a Plotly Sunburst Chart of the countries, organisations, and mission status.
+
+```{python}
+organization_detail = df_data.groupby(["country", "Organisation", "Mission_Status"], as_index = False).agg({"Price": pd.Series.count})
+organization_detail.rename(columns = {"country": "Country", "Organisation": "Organization", "Mission_Status": "Status"}, inplace = True)
+sb = px.sunburst(organization_detail, path = ["Country", "Organization", "Status"], values = "Price")
+sb.show()
+```
+
+# Analyse the Amount of Money Spent by Organisation per Launch
+
+```{python}
+money_spent = df_data.groupby("Organisation", as_index = False).agg({"Price": pd.Series.sum})
+bar = px.bar(money_spent, x = "Organisation", y = "Price", labels = {"Price": "Price in millions of USD"})
+bar.show()
+```
+
+# Chart the Number of Launches per Year
+
+```{python}
+df_data["datetime"] = pd.to_datetime(df_data["Date"], format = "%a %b %d, %Y %H:%M %Z", errors = "coerce")
+df_data.loc[df_data["datetime"].isna(), "datetime"] = pd.to_datetime(df_data[df_data["datetime"].isna()]["Date"], format = "%a %b %d, %Y")
+df_data["year"] = df_data["datetime"].apply(lambda x: x.year)
+
+launches_year = df_data.groupby("year", as_index = False).size()
+lpy = px.scatter(launches_year, x = "year", y = "size", labels = {"size": "Number of Launches"}, trendline = "lowess", trendline_options = {"frac": 0.1})
+lpy.show()
+
+```
+
+# Chart the Number of Launches Month-on-Month until the Present
+
+```{python}
+df_data["month"] = df_data["datetime"].apply(lambda x: x.month)
+launches_month = df_data.groupby("month", as_index = False).size()
+
+lpm = px.scatter(launches_month, x = "month", y = "size", labels = {"size": "Number of Launches"}, trendline = "rolling", trendline_options = {"window": 3})
+lpm.show()
+```
+
+# How has the Launch Price varied Over Time?
+
+Create a line chart that shows the average price of rocket launches over time.
+
+```{python}
+price_year = df_data.groupby("year", as_index = False)["Price"].mean()
+
+ppy = px.line(price_year, x = "year", y = "Price", labels = {"Price": "Price in millions USD"})
+ppy.show()
+```
+
+
